@@ -97,14 +97,14 @@ namespace Geom {
             glGenBuffers(1, &vbo_norm);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_norm);
             glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0); // location = 2
-            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0); // location = 2
+            glEnableVertexAttribArray(1);
 
             glGenBuffers(1, &vbo_uv);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
             glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(float), uvs.data(), GL_STATIC_DRAW);
-            glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0); // location = 3
-            glEnableVertexAttribArray(3);
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0); // location = 3
+            glEnableVertexAttribArray(2);
 
             glBindVertexArray(0);
             return true;

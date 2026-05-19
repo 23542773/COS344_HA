@@ -19,6 +19,10 @@
 using namespace glm;
 using namespace std;
 
+// Interactive runtime rendering state toggles
+bool wireframeMode = false;
+bool keyWasPressed = false;
+
 const char *getError()
 {
     const char *errorDescription;
@@ -28,7 +32,7 @@ const char *getError()
 
 inline void startUpGLFW()
 {
-    glewExperimental = true; // Needed for core profile
+    glewExperimental = true; 
     if (!glfwInit())
     {
         throw getError();
@@ -37,7 +41,7 @@ inline void startUpGLFW()
 
 inline void startUpGLEW()
 {
-    glewExperimental = true; // Needed in core profile
+    glewExperimental = true; 
     if (glewInit() != GLEW_OK)
     {
         glfwTerminate();
@@ -48,20 +52,21 @@ inline void startUpGLEW()
 inline GLFWwindow *setUp()
 {
     startUpGLFW();
-    glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+    glfwWindowHint(GLFW_SAMPLES, 4);               
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // To make MacOS happy
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want old OpenGL
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
     
     GLFWwindow *window;
-    window = glfwCreateWindow(1280, 720, "Team's Golf Course - Person C Test Ground", NULL, NULL);
+    window = glfwCreateWindow(1280, 720, "Stoneridge Complete Model Catalog Test - Person C", NULL, NULL);
     if (window == NULL)
     {
         cout << getError() << endl;
         glfwTerminate();
         throw "Failed to open GLFW window.\n";
     }
+    
     glfwMakeContextCurrent(window); 
     startUpGLEW();
     glEnable(GL_DEPTH_TEST);
@@ -82,68 +87,143 @@ int main()
         return -1;
     }
 
-    // 1. Compile baseline test shaders through your team's utility file logic
+    // Compile unlit verification shaders
     GLuint shaderProgram = LoadShaders("shaders/vertex_test.glsl", "shaders/fragment_test.glsl");
     if (shaderProgram == 0) {
-        std::cerr << "CRITICAL: Test shader loading failed! Check 'shaders/' directory paths." << std::endl;
+        std::cerr << "CRITICAL: Test shader loading failed!" << std::endl;
         glfwTerminate();
         return -1;
     }
 
-    // 2. Flyweight Optimization: Parse and stream heavy triangle data exactly ONCE into VRAM
-    Geom::ObjMesh rockMesh;
-    if (!rockMesh.loadFromFile("models/rocks.obj")) {
-        std::cerr << "CRITICAL: Could not find or parse models/rocks.obj!" << std::endl;
-        std::cerr << "Verify that rocks.obj is present inside the models/ folder." << std::endl;
-        glDeleteProgram(shaderProgram);
-        glfwTerminate();
-        return -1;
-    }
-
-    // 3. Extrinsic Situational Mapping: Scatter separate lightweight instances across the green
-    std::vector<Geom::MeshInstance> rockHazards;
+    // =========================================================================
+    // 1. INTRINSIC FLYWEIGHT MEMORY BUFFER (Declarations Fixed!)
+    // =========================================================================
+    std::cout << "\n[Streaming Complete Model Catalog into GPU Caches...]" << std::endl;
     
-    Geom::MeshInstance rock1(&rockMesh);
-    rock1.position = glm::vec3(-0.4f, -0.1f, 0.0f);
-    rock1.rotation = glm::vec3(0.0f, 35.0f, 0.0f);
-    rock1.scale    = glm::vec3(0.3f);
-    rockHazards.push_back(rock1);
+    // Allocate instances so identifiers are completely defined for the compiler
+    Geom::ObjMesh rockMesh;
+    Geom::ObjMesh treeMesh;
+    Geom::ObjMesh barrierMesh;
+    Geom::ObjMesh flagMesh;
+    Geom::ObjMesh benchMesh;
+    Geom::ObjMesh bridgeMesh;
 
-    Geom::MeshInstance rock2(&rockMesh);
-    rock2.position = glm::vec3(0.4f, 0.2f, 0.0f);
-    rock2.rotation = glm::vec3(15.0f, 160.0f, -10.0f);
-    rock2.scale    = glm::vec3(0.6f);
-    rockHazards.push_back(rock2);
+    // Loading sequences accompanied by trace print statements
+    std::cout << "Loading Rocks..." << std::endl;
+    bool rocksLoaded = rockMesh.loadFromFile("models/Rocks.obj");
 
-    // Get transform shader link slot location address 
+    std::cout << "Loading Palm Tree..." << std::endl;
+    bool treesLoaded = treeMesh.loadFromFile("models/Palm_Tree.obj");
+
+    std::cout << "Loading Wooden Barrier..." << std::endl;
+    bool barriersLoaded = barrierMesh.loadFromFile("models/Wooden_Barrier.obj");
+
+    std::cout << "Loading Flag..." << std::endl;
+    bool flagsLoaded = flagMesh.loadFromFile("models/Flag.obj");
+
+    std::cout << "Loading Bench..." << std::endl;
+    bool benchLoaded = benchMesh.loadFromFile("models/Bench.obj");
+
+    std::cout << "Loading Bridge..." << std::endl;
+    bool bridgeLoaded = bridgeMesh.loadFromFile("models/Bridge.obj");
+
+    std::cout << "All meshes finished processing!" << std::endl;
+
+    // Print quick parsing success summaries
+    std::cout << "\n--- CORE ASSET INTEGRITY PASS ---" << std::endl;
+    std::cout << "  Rocks.obj:          " << (rocksLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "  Palm_Tree.obj:      " << (treesLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "  Wooden_Barrier.obj: " << (barriersLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "  Flag.obj:           " << (flagsLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "  Bench.obj:          " << (benchLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "  Bridge.obj:         " << (bridgeLoaded ? "ONLINE" : "OFFLINE") << std::endl;
+    std::cout << "---------------------------------\n" << std::endl;
+
+    // =========================================================================
+    // 2. EXTRINSIC POSITION VECTOR ARRAYS (Distributing Grid Contexts)
+    // =========================================================================
+    std::vector<Geom::MeshInstance> testSceneGrid;
+
+    // A. Populate Rows of Obstacles
+    if (rocksLoaded) {
+        for (int i = 0; i < 5; ++i) {
+            Geom::MeshInstance instance(&rockMesh);
+            instance.position = glm::vec3(-2.2f + (i * 0.4f), -0.2f, -0.5f);
+            instance.scale    = glm::vec3(0.15f);
+            testSceneGrid.push_back(instance);
+        }
+    }
+    if (barriersLoaded) {
+        for (int i = 0; i < 5; ++i) {
+            Geom::MeshInstance instance(&barrierMesh);
+            instance.position = glm::vec3(-1.8f + (i * 0.8f), -0.3f, -1.2f);
+            instance.scale    = glm::vec3(0.25f, 0.15f, 0.25f);
+            testSceneGrid.push_back(instance);
+        }
+    }
+
+    // B. Populate Rows of Decor & Landscaping elements
+    if (treesLoaded) {
+        for (int i = 0; i < 6; ++i) {
+            Geom::MeshInstance instance(&treeMesh);
+            instance.position = glm::vec3(-2.0f + (i * 0.8f), -0.3f, 1.2f);
+            instance.scale    = glm::vec3(0.35f);
+            testSceneGrid.push_back(instance);
+        }
+    }
+    if (flagsLoaded) {
+        for (int i = 0; i < 4; ++i) {
+            Geom::MeshInstance instance(&flagMesh);
+            instance.position = glm::vec3(-1.4f + (i * 0.7f), -0.3f, 0.4f);
+            instance.scale    = glm::vec3(0.25f);
+            testSceneGrid.push_back(instance);
+        }
+    }
+    if (benchLoaded) {
+        Geom::MeshInstance instance(&benchMesh);
+        instance.position = glm::vec3(0.0f, -0.3f, 0.0f);
+        instance.scale    = glm::vec3(0.3f);
+        testSceneGrid.push_back(instance);
+    }
+    if (bridgeLoaded) {
+        Geom::MeshInstance instance(&bridgeMesh);
+        instance.position = glm::vec3(0.8f, -0.2f, -0.2f);
+        instance.scale    = glm::vec3(0.4f);
+        testSceneGrid.push_back(instance);
+    }
+
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "uModel");
 
-    std::cout << "\n[Smoke Test Ground Active] Both rock instances pointing to single geometry buffer entry." << std::endl;
-
-    // Runtime Render Loop
+    // Main Loop
     while (!glfwWindowShouldClose(window))
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        // Standard gray clean screen clear operations
+        // Key W switch mode processing with debounce checks
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            if (!keyWasPressed) {
+                wireframeMode = !wireframeMode;
+                keyWasPressed = true;
+            }
+        } else {
+            keyWasPressed = false;
+        }
+
         glClearColor(0.12f, 0.12f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Bind verification shader program context
         glUseProgram(shaderProgram);
 
-        // Fast state rendering dispatch iteration loop
-        for (const auto& instance : rockHazards) {
-            // Note: pass 'true' instead of 'false' to instantly render primitive line wireframes
-            instance.render(modelLoc, false); 
+        // Batch execution loop drawing every element on screen cleanly
+        for (const auto& instance : testSceneGrid) {
+            instance.render(modelLoc, wireframeMode); 
         }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Clean up graphics engine allocations safely
     glDeleteProgram(shaderProgram);
     glfwTerminate();
     return 0;

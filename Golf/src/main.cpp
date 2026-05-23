@@ -98,7 +98,7 @@ inline GLFWwindow *setUp() {
 
   //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-  glClearColor(1.0f, 0.0f, 1.0f, 1.0f); // Hot Magenta
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
   return window;
 }

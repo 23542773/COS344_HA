@@ -96,7 +96,9 @@ inline GLFWwindow *setUp() {
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
-  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+  glClearColor(1.0f, 0.0f, 1.0f, 1.0f); // Hot Magenta
 
   return window;
 }
@@ -196,6 +198,11 @@ int main() {
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
+
+    GLenum err;
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    cout << "OpenGL Error: " << err << endl;
+  }
 
     glfwSwapBuffers(window);
     glfwPollEvents();

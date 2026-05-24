@@ -40,10 +40,18 @@ glm::mat4 Camera::getTopDownViewMatrix(float height) {
   glm::vec3 topPosition = Position;
   topPosition.y += height;
 
-  // Look directly downward
-  return glm::lookAt(topPosition, Position, glm::vec3(0.0f, 0.0f, -1.0f));
-}
+  // Forward direction projected onto XZ plane
+  glm::vec3 flatFront = glm::normalize(glm::vec3(Front.x, 0.0f, Front.z));
 
+  // If camera looks straight up/down, fallback
+  if (glm::length(flatFront) < 0.001f)
+    flatFront = glm::vec3(0.0f, 0.0f, -1.0f);
+
+  // Rotate minimap using camera heading
+  glm::vec3 upDir = flatFront;
+
+  return glm::lookAt(topPosition, Position, upDir);
+}
 glm::mat4 Camera::getOrthographicProjection(float width, float height) {
 
   return glm::ortho(-width, width, -height, height, 0.1f, 500.0f);

@@ -39,6 +39,12 @@ GLuint hudVAO, hudVBO;
 GLuint droneVAO, droneVBO;
 GLuint droneShader;
 
+GLuint sceneFBO;
+GLuint sceneTexture;
+GLuint sceneDepthRBO;
+GLuint screenVAO, screenVBO;
+GLuint screenShader;
+
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
@@ -117,7 +123,34 @@ inline GLFWwindow *setUp() {
 
   return window;
 }
+void initFramebuffer(int width, int height) {
+  glGenFramebuffers(1, &sceneFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
 
+  // Color texture
+  glGenTextures(1, &sceneTexture);
+  glBindTexture(GL_TEXTURE_2D, sceneTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, NULL);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         sceneTexture, 0);
+
+  // Depth buffer
+  glGenRenderbuffers(1, &sceneDepthRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, sceneDepthRBO);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER, sceneDepthRBO);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "Framebuffer not complete!\n";
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
   if (firstMouse) {
     lastX = (float)xpos;
@@ -260,6 +293,21 @@ void drawDroneMarker(float centerX, float centerY, float size) {
 
   glEnable(GL_DEPTH_TEST);
 }
+void initScreenQuad() {
+  float quad[] = {-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
+
+                  -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f};
+
+  glGenVertexArrays(1, &screenVAO);
+  glGenBuffers(1, &screenVBO);
+
+  glBindVertexArray(screenVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+}
 
 void renderScene(std::vector<SceneObject> &sceneObjects, GLuint shader,
                  glm::mat4 view, glm::mat4 projection) {
@@ -280,7 +328,6 @@ int main() {
     cout << e << endl;
     return -1;
   }
-
   camera = new Camera(glm::vec3(0.0f, 2.0f, 5.0f), -90.0f, 0.0f);
 
   float deltaTime = 0.0f;
@@ -311,8 +358,11 @@ int main() {
   GLuint objectShader = LoadShaders("object.vert", "object.frag");
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
+  screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
   initDroneMarker();
+  initScreenQuad();
 
+  initFramebuffer(fbWidth, fbHeight);
   float hudVertices[] = {
       // positions    // colors
       -1.0f, 1.0f, 0.3f,  0.3f, 0.3f,  0.25f, -1.0f, -1.0f, 0.3f,
@@ -457,12 +507,21 @@ int main() {
   // hole 17
   // hole 18
   float rollOffset = 0;
+  static bool nPressedLast = false;
+
   while (!glfwWindowShouldClose(window)) {
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     rollOffset = 0;
+    bool nPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
+
+    if (nPressed && !nPressedLast) {
+      isNight = !isNight;
+    }
+
+    nPressedLast = nPressed;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
@@ -509,13 +568,30 @@ int main() {
 
     glm::mat4 projection =
         camera->getProjectionMatrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
-
+    glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderScene(sceneObjects, objectShader, view, projection);
 
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
     terrain->draw();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(screenShader);
+
+    glUniform1i(glGetUniformLocation(screenShader, "nightMode"), isNight);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTexture);
+    glUniform1i(glGetUniformLocation(screenShader, "screenTexture"), 0);
+
+    glBindVertexArray(screenVAO);
+    glDisable(GL_DEPTH_TEST);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glEnable(GL_DEPTH_TEST);
+
     // HUD minimap
 
     glViewport(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);

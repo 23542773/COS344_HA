@@ -36,16 +36,16 @@ void setupObject(SceneObject &object, std::vector<float> &vertices,
   glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float),
                vertices.data(), GL_STATIC_DRAW);
 
-  // Position
+  // Position (location = 0)
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
-  // Color
+  // Normal (location = 1)
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
-  // Texture coordinates
+  // Texture coordinates (location = 2)
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
                         (void *)(6 * sizeof(float)));
   glEnableVertexAttribArray(2);
@@ -125,50 +125,55 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
   float b = color.b;
 
   std::vector<float> vertices = {
+      // Front face (normal: 0,0,1)
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+       0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+       0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+      -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
 
-      // positions           // colors     // tex
+      // Back face (normal: 0,0,-1)
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+       0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+       0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 
-      // Front
-      -0.5f, -0.5f, 0.5f, r, g, b, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, r, g, b, 1.0f,
-      0.0f, 0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 1.0f,
+      // Left face (normal: -1,0,0)
+      -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+      -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-      0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, r, g, b, 0.0f,
-      1.0f, -0.5f, -0.5f, 0.5f, r, g, b, 0.0f, 0.0f,
+      // Right face (normal: 1,0,0)
+       0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+       0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+       0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+       0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+       0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 
-      // Back
-      -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 0.0f, -0.5f, 0.5f, -0.5f, r, g, b,
-      0.0f, 1.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f, 1.0f,
+      // Top face (normal: 0,1,0)
+      -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+      -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+       0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+       0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+      -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
-      0.5f, 0.5f, -0.5f, r, g, b, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, r, g, b, 1.0f,
-      0.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 0.0f,
-
-      // Left
-      -0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
-      1.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
-
-      -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, r, g, b,
-      0.0f, 0.0f, -0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
-
-      // Right
-      0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
-      1.0f, 0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
-
-      0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, r, g, b, 0.0f,
-      0.0f, 0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
-
-      // Top
-      -0.5f, 0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, 0.5f, 0.5f, r, g, b, 0.0f,
-      0.0f, 0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
-
-      0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
-      1.0f, -0.5f, 0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
-
-      // Bottom
-      -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, r, g, b,
-      0.0f, 0.0f, 0.5f, -0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
-
-      0.5f, -0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, -0.5f, -0.5f, r, g, b, 1.0f,
-      1.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f};
+      // Bottom face (normal: 0,-1,0)
+      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+       0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+       0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+       0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+      -0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f, 0.0f, 1.0f
+  };
+  
   assignAABB(object);
   setupObject(object, vertices, GL_TRIANGLES);
 
@@ -199,14 +204,14 @@ SceneObject ShapeFactory::createPlane(glm::vec3 position, glm::vec2 size,
   float b = color.b;
 
   std::vector<float> vertices = {
-
-      -0.5f, 0.0f, -0.5f, r, g, b, 0.0f, 0.0f,
-      0.5f,  0.0f, -0.5f, r, g, b, 1.0f, 0.0f,
-      0.5f,  0.0f, 0.5f,  r, g, b, 1.0f, 1.0f,
-
-      0.5f,  0.0f, 0.5f,  r, g, b, 1.0f, 1.0f,
-      -0.5f, 0.0f, 0.5f,  r, g, b, 0.0f, 1.0f,
-      -0.5f, 0.0f, -0.5f, r, g, b, 0.0f, 0.0f};
+      -0.5f, 0.0f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+       0.5f, 0.0f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+       0.5f, 0.0f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+       0.5f, 0.0f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+      -0.5f, 0.0f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+      -0.5f, 0.0f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f
+  };
+  
   assignAABB(object);
   setupObject(object, vertices, GL_TRIANGLES);
 
@@ -249,26 +254,30 @@ SceneObject ShapeFactory::createCylinder(glm::vec3 position, float radius,
   std::vector<float> vertices;
 
   for (int i = 0; i < segments; i++) {
-
     float theta1 = (float)i / segments * 2.0f * 3.14159f;
     float theta2 = (float)(i + 1) / segments * 2.0f * 3.14159f;
 
     float x1 = radius * cos(theta1);
     float z1 = radius * sin(theta1);
-
     float x2 = radius * cos(theta2);
     float z2 = radius * sin(theta2);
+    
+    float nx1 = cos(theta1);
+    float nz1 = sin(theta1);
+    float nx2 = cos(theta2);
+    float nz2 = sin(theta2);
 
     vertices.insert(vertices.end(), {
-
-                                        x1, 0.0f,   z1, r, g, b, 0.0f, 0.0f,
-                                        x2, 0.0f,   z2, r, g, b, 1.0f, 0.0f,
-                                        x2, height, z2, r, g, b, 1.0f, 1.0f,
-
-                                        x2, height, z2, r, g, b, 1.0f, 1.0f,
-                                        x1, height, z1, r, g, b, 0.0f, 1.0f,
-                                        x1, 0.0f,   z1, r, g, b, 0.0f, 0.0f});
+        x1, 0.0f,   z1,   nx1, 0.0f, nz1,   0.0f, 0.0f,
+        x2, 0.0f,   z2,   nx2, 0.0f, nz2,   1.0f, 0.0f,
+        x2, height, z2,   nx2, 0.0f, nz2,   1.0f, 1.0f,
+        
+        x2, height, z2,   nx2, 0.0f, nz2,   1.0f, 1.0f,
+        x1, height, z1,   nx1, 0.0f, nz1,   0.0f, 1.0f,
+        x1, 0.0f,   z1,   nx1, 0.0f, nz1,   0.0f, 0.0f
+    });
   }
+  
   float approxRadius = radius * std::max(object.scale.x, object.scale.z);
 
   assignSphere(object, approxRadius);
@@ -304,12 +313,15 @@ void ShapeFactory::drawObject(SceneObject &object, GLuint shader,
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE,
                      &projection[0][0]);
 
-  glUniform1i(glGetUniformLocation(shader, "useTexture"), object.textured);
+  // Set texture flag and object color
+  glUniform1i(glGetUniformLocation(shader, "useTexture"), object.textured ? 1 : 0);
+  glUniform3f(glGetUniformLocation(shader, "objectColor"), 
+              object.color.r, object.color.g, object.color.b);
 
   if (object.textured) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, object.textureID);
-    glUniform1i(glGetUniformLocation(shader, "texture1"), 0);
+    glUniform1i(glGetUniformLocation(shader, "texture_diffuse1"), 0);
   }
 
   glBindVertexArray(object.VAO);

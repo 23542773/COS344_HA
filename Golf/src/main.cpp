@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <ostream>
 #include <random>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,10 @@ Skybox *skybox;
 GLuint hudVAO, hudVBO;
 GLuint droneVAO, droneVBO;
 GLuint droneShader;
+
+GLuint rectVAO = 0;
+GLuint rectVBO = 0;
+GLuint rectShader = 0;
 
 GLuint crosshairVAO, crosshairVBO;
 GLuint crosshairShader;
@@ -88,6 +93,8 @@ inline void startUpGLEW() {
   }
 }
 
+const int WINDOW_WIDTH = 1280;
+const int WINDOW_HEIGHT = 720;
 inline GLFWwindow *setUp() {
   startUpGLFW();
 
@@ -100,7 +107,8 @@ inline GLFWwindow *setUp() {
 
   GLFWwindow *window;
 
-  window = glfwCreateWindow(1280, 720, "Team's Golf Course", NULL, NULL);
+  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Team's Golf Course",
+                            NULL, NULL);
 
   if (window == NULL) {
     cout << getError() << endl;
@@ -158,6 +166,29 @@ void initCrosshair() {
   glEnableVertexAttribArray(0);
 
   glBindVertexArray(0);
+}
+
+void initRectRenderer() {
+
+  float vertices[12] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+
+                        0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+
+  glGenVertexArrays(1, &rectVAO);
+  glGenBuffers(1, &rectVBO);
+
+  glBindVertexArray(rectVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+
+  glEnableVertexAttribArray(0);
+
+  glBindVertexArray(0);
+
+  rectShader = LoadShaders("rect.vert", "rect.frag");
 }
 
 void initFramebuffer(int width, int height) {
@@ -304,8 +335,6 @@ void addTunnel(std::vector<SceneObject> &scene, glm::vec3 center, float wx,
       center + glm::vec3((wx * 0.5f + 0.2f), 1.0f, 0),
       glm::vec3(0.4f, 1.8f, wz), glm::vec3(0), concrete));
 }
-const int WINDOW_WIDTH = 1280;
-const int WINDOW_HEIGHT = 720;
 
 const int HUD_X = fbWidth * 0.02f;
 const int HUD_Y = fbHeight * 0.02f;
@@ -364,38 +393,28 @@ void drawCrosshair() {
 void drawFilledRect(float x, float y, float width, float height,
                     glm::vec4 color) {
 
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
-
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
+  glUseProgram(rectShader);
 
   glDisable(GL_DEPTH_TEST);
 
-  glColor4f(color.r, color.g, color.b, color.a);
+  glUniform2f(glGetUniformLocation(rectShader, "uPosition"), x, y);
 
-  glBegin(GL_QUADS);
+  glUniform2f(glGetUniformLocation(rectShader, "uSize"), width, height);
 
-  glVertex2f(x, y);
-  glVertex2f(x + width, y);
-  glVertex2f(x + width, y + height);
-  glVertex2f(x, y + height);
+  glUniform2f(glGetUniformLocation(rectShader, "uResolution"),
+              (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
 
-  glEnd();
+  glUniform4f(glGetUniformLocation(rectShader, "uColor"), color.r, color.g,
+              color.b, color.a);
+
+  glBindVertexArray(rectVAO);
+
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+
+  glBindVertexArray(0);
 
   glEnable(GL_DEPTH_TEST);
-
-  glPopMatrix();
-
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-
-  glMatrixMode(GL_MODELVIEW);
 }
-
 void drawRectOutline(float x, float y, float width, float height,
                      float thickness, glm::vec4 color) {
 
@@ -406,6 +425,57 @@ void drawRectOutline(float x, float y, float width, float height,
   drawFilledRect(x, y, thickness, height, color);
 
   drawFilledRect(x + width - thickness, y, thickness, height, color);
+}
+void drawSpeedIndicator(float speed) {
+
+  // Bottom-right corner placement
+  float bgWidth = 220.0f;
+  float bgHeight = 24.0f;
+
+  float x = WINDOW_WIDTH - bgWidth - 40.0f;
+  float y = 40.0f;
+
+  // Background bar
+  drawFilledRect(x, y, bgWidth, bgHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.7f));
+
+  drawRectOutline(x, y, bgWidth, bgHeight, 2.0f,
+                  glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+
+  // Clamp speed
+  float maxSpeed = 20.0f;
+  float normalized = glm::clamp(speed / maxSpeed, 0.0f, 1.0f);
+
+  // Bar disappears completely when not moving
+  if (normalized <= 0.001f)
+    return;
+
+  // Scale bar width based on speed
+  float padding = 3.0f;
+  float barWidth = (bgWidth - padding * 2.0f) * normalized;
+  float barHeight = bgHeight - padding * 2.0f;
+
+  glm::vec4 barColor;
+
+  // Change colour based on speed
+  if (normalized < 0.25f) {
+
+    barColor = glm::vec4(0.0f, 1.0f, 0.0f, 0.9f);
+
+  } else if (normalized < 0.5f) {
+
+    barColor = glm::vec4(1.0f, 1.0f, 0.0f, 0.9f);
+
+  } else if (normalized < 0.75f) {
+
+    barColor = glm::vec4(1.0f, 0.5f, 0.0f, 0.9f);
+
+  } else {
+
+    barColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.9f);
+  }
+
+  // Speed bar
+  drawFilledRect(x + padding, y + padding, barWidth, barHeight, barColor);
 }
 
 void drawDroneMarker(float centerX, float centerY, float size) {
@@ -532,9 +602,11 @@ int main() {
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
   crosshairShader = LoadShaders("crosshair.vert", "crosshair.frag");
+
   initDroneMarker();
   initCrosshair();
   initScreenQuad();
+  initRectRenderer();
 
   g_lightManager.getDroneLight().diffuse =
       glm::vec3(3.0f, 3.0f, 3.0f); // 3x brighter
@@ -1072,11 +1144,17 @@ int main() {
 
     // Restore viewport
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    // drone speed calc
+    float droneSpeed = glm::length(camera->Position - lastCamPos) /
+                       glm::max(deltaTime, 0.0001f);
 
     // Drone marker
     drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);
     // Crosshair
     drawCrosshair();
+    // Speed indicator
+    drawSpeedIndicator(droneSpeed);
+
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;

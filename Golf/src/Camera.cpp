@@ -53,6 +53,8 @@ void Camera::setAspectRatio(float aspect) { aspectRatio = aspect; }
 
 float Camera::getYaw() { return this->Yaw; }
 
+glm::vec3 Camera::getFront() { return this->Front; }
+
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
   float velocity = MovementSpeed * deltaTime;
 

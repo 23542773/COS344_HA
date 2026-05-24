@@ -296,11 +296,8 @@ int main() {
   // hole 8
   // hole 9
   //hole 10
-// ========== HOLE 10 ==========
-// L-shaped path: straight ahead, then turns left up a ramp to an elevated cup.
-// Difficulty: Easy.
 
-// --- Lower start platform (tee area) ---
+// Lower start platform 
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(0.0f, 0.2f, 18.0f), glm::vec3(4.0f, 0.3f, 3.0f), glm::vec3(0.0f), turf));
 
@@ -308,36 +305,34 @@ addBorder(sceneObjects, glm::vec3(0.0f, 0.5f, 16.5f), glm::vec3(4.0f, 0.7f, 0.4f
 addBorder(sceneObjects, glm::vec3(-2.2f, 0.5f, 18.0f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f)); // left
 addBorder(sceneObjects, glm::vec3(2.2f, 0.5f, 18.0f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f)); // right
 
-// --- Straight segment heading +Z ---
+// Straight segment 
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(0.0f, 0.2f, 21.5f), glm::vec3(4.0f, 0.3f, 4.0f), glm::vec3(0.0f), turf));
 
 addBorder(sceneObjects, glm::vec3(-2.2f, 0.5f, 21.5f), glm::vec3(0.4f, 0.7f, 4.0f), glm::vec3(0.0f)); // left wall
 addBorder(sceneObjects, glm::vec3(2.2f, 0.5f, 21.5f), glm::vec3(0.4f, 0.7f, 4.0f), glm::vec3(0.0f)); // right wall
 
-// --- Corner junction ---
+// Corner
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(-2.0f, 0.2f, 23.8f), glm::vec3(8.0f, 0.3f, 4.0f), glm::vec3(0.0f), turf));
 
 addBorder(sceneObjects, glm::vec3(-2.0f, 0.5f, 25.9f), glm::vec3(8.0f, 0.7f, 0.4f), glm::vec3(0.0f)); // bottom wall
 addBorder(sceneObjects, glm::vec3(2.2f, 0.5f, 23.8f), glm::vec3(0.4f, 0.7f, 4.0f), glm::vec3(0.0f)); // right wall cap
 
-// --- Left-running arm heading -X ---
+// Left
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(-8.5f, 0.2f, 23.8f), glm::vec3(5.0f, 0.3f, 4.0f), glm::vec3(0.0f), turf));
 
 addBorder(sceneObjects, glm::vec3(-8.5f, 0.5f, 21.8f), glm::vec3(5.0f, 0.7f, 0.4f), glm::vec3(0.0f)); // top wall
 addBorder(sceneObjects, glm::vec3(-8.5f, 0.5f, 25.9f), glm::vec3(5.0f, 0.7f, 0.4f), glm::vec3(0.0f)); // bottom wall
 
-// --- Ramp: rises in -X direction ---
+// Ramp
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(-13.2f, 0.42f, 23.8f), glm::vec3(3.0f, 0.2f, 4.0f), glm::vec3(0.0f, 0.0f, -12.0f), turf));
 
 addBorder(sceneObjects, glm::vec3(-13.2f, 0.65f, 21.8f), glm::vec3(3.0f, 0.5f, 0.4f), glm::vec3(0.0f)); // top wall
 addBorder(sceneObjects, glm::vec3(-13.2f, 0.65f, 25.9f), glm::vec3(3.0f, 0.5f, 0.4f), glm::vec3(0.0f)); // bottom wall
 
-// --- Elevated putting tier ---
-// Removed side borders so the ball can exit the ramp onto this platform freely.
 sceneObjects.push_back(ShapeFactory::createCube(
     glm::vec3(-16.5f, 0.75f, 23.8f), glm::vec3(4.0f, 0.3f, 4.0f), glm::vec3(0.0f), turf));
 

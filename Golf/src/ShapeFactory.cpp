@@ -1,5 +1,6 @@
 #include "ShapeFactory.h"
 
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
@@ -88,13 +89,13 @@ GLuint ShapeFactory::loadTexture(const std::string &path) {
 }
 
 SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
-                                     glm::vec3 color,
+                                     glm::vec3 rotation, glm::vec3 color,
                                      const std::string &texturePath) {
 
   SceneObject object;
 
   object.position = position;
-  object.rotation = glm::vec3(0.0f);
+  object.rotation = rotation;
   object.scale = scale;
   object.color = color;
 
@@ -103,6 +104,8 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
 
   if (object.textured)
     object.textureID = loadTexture(texturePath);
+  else
+    object.textureID = 0;
 
   float r = color.r;
   float g = color.g;
@@ -110,7 +113,7 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
 
   std::vector<float> vertices = {
 
-      // positions          // colors      // tex
+      // positions           // colors     // tex
 
       // Front
       -0.5f, -0.5f, 0.5f, r, g, b, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, r, g, b, 1.0f,
@@ -124,7 +127,35 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
       0.0f, 1.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f, 1.0f,
 
       0.5f, 0.5f, -0.5f, r, g, b, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, r, g, b, 1.0f,
-      0.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 0.0f};
+      0.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 0.0f,
+
+      // Left
+      -0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
+      1.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
+
+      -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, r, g, b,
+      0.0f, 0.0f, -0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
+
+      // Right
+      0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
+      1.0f, 0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
+
+      0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, r, g, b, 0.0f,
+      0.0f, 0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
+
+      // Top
+      -0.5f, 0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, 0.5f, 0.5f, r, g, b, 0.0f,
+      0.0f, 0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
+
+      0.5f, 0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, r, g, b, 1.0f,
+      1.0f, -0.5f, 0.5f, -0.5f, r, g, b, 0.0f, 1.0f,
+
+      // Bottom
+      -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, r, g, b,
+      0.0f, 0.0f, 0.5f, -0.5f, 0.5f, r, g, b, 1.0f, 0.0f,
+
+      0.5f, -0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, -0.5f, -0.5f, r, g, b, 1.0f,
+      1.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f};
 
   setupObject(object, vertices, GL_TRIANGLES);
 
@@ -132,13 +163,13 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
 }
 
 SceneObject ShapeFactory::createPlane(glm::vec3 position, glm::vec2 size,
-                                      glm::vec3 color,
+                                      glm::vec3 rotation, glm::vec3 color,
                                       const std::string &texturePath) {
 
   SceneObject object;
 
   object.position = position;
-  object.rotation = glm::vec3(0.0f);
+  object.rotation = rotation;
   object.scale = glm::vec3(size.x, 1.0f, size.y);
   object.color = color;
 
@@ -147,6 +178,8 @@ SceneObject ShapeFactory::createPlane(glm::vec3 position, glm::vec2 size,
 
   if (object.textured)
     object.textureID = loadTexture(texturePath);
+  else
+    object.textureID = 0;
 
   float r = color.r;
   float g = color.g;
@@ -171,22 +204,20 @@ SceneObject ShapeFactory::createRamp(glm::vec3 position, glm::vec3 scale,
                                      glm::vec3 rotation, glm::vec3 color,
                                      const std::string &texturePath) {
 
-  SceneObject ramp = createCube(position, scale, color, texturePath);
-
-  ramp.rotation = rotation;
+  SceneObject ramp = createCube(position, scale, rotation, color, texturePath);
 
   return ramp;
 }
 
 SceneObject ShapeFactory::createCylinder(glm::vec3 position, float radius,
                                          float height, int segments,
-                                         glm::vec3 color,
+                                         glm::vec3 rotation, glm::vec3 color,
                                          const std::string &texturePath) {
 
   SceneObject object;
 
   object.position = position;
-  object.rotation = glm::vec3(0.0f);
+  object.rotation = rotation;
   object.scale = glm::vec3(1.0f);
   object.color = color;
 
@@ -195,6 +226,8 @@ SceneObject ShapeFactory::createCylinder(glm::vec3 position, float radius,
 
   if (object.textured)
     object.textureID = loadTexture(texturePath);
+  else
+    object.textureID = 0;
 
   float r = color.r;
   float g = color.g;

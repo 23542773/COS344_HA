@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "Camera.h"
+#include "ShapeFactory.h"
 #include "Skybox.h"
 #include "shader.hpp"
 
@@ -96,7 +97,7 @@ inline GLFWwindow *setUp() {
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
-  //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  // glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -121,6 +122,27 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
+}
+glm::vec3 turf(0.1f, 0.75f, 0.2f);
+glm::vec3 border(0.22f, 0.11f, 0.04f);
+glm::vec3 concrete(0.4f, 0.4f, 0.4f);
+glm::vec3 water(0.1f, 0.4f, 0.8f);
+glm::vec3 black(0.02f, 0.02f, 0.02f);
+
+void addBorder(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale,
+               glm::vec3 rot) {
+
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, border));
+}
+
+void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
+
+  scene.push_back(ShapeFactory::createCylinder(pos,
+                                               0.22f,              // radius
+                                               0.12f,              // height
+                                               32,                 // segments
+                                               glm::vec3(0, 0, 0), // rotation
+                                               black));
 }
 
 int main() {
@@ -152,57 +174,82 @@ int main() {
 
   GLuint objectShader = LoadShaders("object.vert", "object.frag");
 
-  float prismVertices[] = {
+  // any scene code goes here, just push objects onto the sceneObjects vector
 
-      // Front triangle
-      0.0f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-      0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+  std::vector<SceneObject> sceneObjects;
+  // hole 1
+  glm::vec3 turf(0.1f, 0.7f, 0.2f);
+  glm::vec3 border(0.18f, 0.09f, 0.03f);
+  glm::vec3 holeColor(0.01f, 0.01f, 0.01f);
 
-      // Back triangle
-      0.0f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-      0.0f, 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+  glm::vec3 inclineRot(0.0f, 90.0f, 8.0f);
 
-      // Left face
-      0.0f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f,
-      -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+  // Top start platform
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.0f, 1.4f, 16.5f), glm::vec3(6.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f), turf));
 
-      0.0f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
-      0.0f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+  // Top platform borders (NO back edge - connects to incline)
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.7f, 15.0f),
+            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-      // Right face
-      0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.7f, 16.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-      0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
-      0.0f, 0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.7f, 16.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-      // Bottom face
-      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f,
-      0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,
+  // incline plane
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 1.0f, 20.8f),
+                                                  glm::vec3(6.0f, 0.3f, 4.0f),
+                                                  inclineRot, turf));
 
-      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-      1.0f, -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f};
+  // Bottom flat platform
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 0.7f, 24.5f),
+                                                  glm::vec3(6.0f, 0.3f, 3.0f),
+                                                  glm::vec3(0.0f), turf));
 
-  GLuint prismVAO, prismVBO;
+  // Bottom platform borders (NO top edge - connects to incline)
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.0f, 26.0f),
+            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f));
 
-  glGenVertexArrays(1, &prismVAO);
-  glGenBuffers(1, &prismVBO);
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.0f, 24.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
 
-  glBindVertexArray(prismVAO);
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.0f, 24.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
 
-  glBindBuffer(GL_ARRAY_BUFFER, prismVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(prismVertices), prismVertices,
-               GL_STATIC_DRAW);
+  addHoleCup(sceneObjects, glm::vec3(33.0f, 0.9f, 24.5f));
+  // hole 2
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-35, 0.2, 20),
+                                                  glm::vec3(3, 0.3, 9),
+                                                  glm::vec3(0, 0, 15), turf));
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-30, 0.2, 25),
+                                                  glm::vec3(8, 0.3, 3),
+                                                  glm::vec3(0, 0, -10), turf));
 
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-24, 0.2, 22),
+                                                  glm::vec3(3, 0.3, 8),
+                                                  glm::vec3(0, 0, 20), turf));
 
-  glBindVertexArray(0);
-
+  addHoleCup(sceneObjects, glm::vec3(-23, 0.3, 18));
+  // hole 3
+  // hole 4
+  // hole 5
+  // hole 6
+  // hole 7
+  // hole 8
+  // hole 9
+  // hole 10
+  // hole 11
+  // hole 12
+  // hole 13
+  // hole 14
+  // hole 15
+  // hole 16
+  // hole 17
+  // hole 18
   while (!glfwWindowShouldClose(window)) {
 
     float currentFrame = glfwGetTime();
@@ -250,29 +297,18 @@ int main() {
 
     glUseProgram(objectShader);
 
-    glm::mat4 model = glm::mat4(1.0f);
+    for (SceneObject &object : sceneObjects) {
 
-    glUniformMatrix4fv(glGetUniformLocation(objectShader, "model"), 1, GL_FALSE,
-                       &model[0][0]);
-
-    glUniformMatrix4fv(glGetUniformLocation(objectShader, "view"), 1, GL_FALSE,
-                       &view[0][0]);
-
-    glUniformMatrix4fv(glGetUniformLocation(objectShader, "projection"), 1,
-                       GL_FALSE, &projection[0][0]);
-
-    glBindVertexArray(prismVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 24);
-    glBindVertexArray(0);
-
+      ShapeFactory::drawObject(object, objectShader, view, projection);
+    }
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
 
     GLenum err;
-  while ((err = glGetError()) != GL_NO_ERROR) {
-    cout << "OpenGL Error: " << err << endl;
-  }
+    while ((err = glGetError()) != GL_NO_ERROR) {
+      cout << "OpenGL Error: " << err << endl;
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();

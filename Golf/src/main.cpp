@@ -758,7 +758,8 @@ int main() {
   float rollOffset = 0;
   static bool nPressedLast = false;
   glm::vec3 lastCamPos;
-
+  static bool gPressedLast = false;
+  bool grayscale = false;
   while (!glfwWindowShouldClose(window)) {
     lastCamPos = camera->Position;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
@@ -773,6 +774,14 @@ int main() {
     }
 
     nPressedLast = nPressed;
+
+    bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
+
+    if (gPressed && !gPressedLast) {
+      grayscale = !grayscale;
+    }
+
+    gPressedLast = gPressed;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
@@ -840,6 +849,7 @@ int main() {
     glUseProgram(screenShader);
 
     glUniform1i(glGetUniformLocation(screenShader, "nightMode"), isNight);
+    glUniform1i(glGetUniformLocation(screenShader, "grayscale"), grayscale);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTexture);

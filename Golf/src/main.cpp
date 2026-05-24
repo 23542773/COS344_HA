@@ -17,6 +17,7 @@
 #include "Terrain.h"
 #include "shader.hpp"
 #include "utils/ObjectLoader.h"
+#include "lighting/LightManager.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -44,6 +45,9 @@ GLuint sceneTexture;
 GLuint sceneDepthRBO;
 GLuint screenVAO, screenVBO;
 GLuint screenShader;
+
+// Global LightManager for lighting control
+LightManager g_lightManager;
 
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
@@ -405,14 +409,25 @@ void initScreenQuad() {
   glEnableVertexAttribArray(0);
 }
 
-void renderScene(std::vector<SceneObject> &sceneObjects, GLuint shader,
+void renderScene(std::vector<SceneObject> &sceneObjects, Shader &shader,
                  glm::mat4 view, glm::mat4 projection) {
 
-  glUseProgram(shader);
+  shader.use();
+  
+  // Bind lighting uniforms
+  g_lightManager.bindAllLights(shader);
+  shader.setVec3("viewPos", camera->Position);
+  
+  GLuint shaderID = shader.getProgramID();
+  
+  // Set matrices for ShapeFactory
+  GLint viewLoc = glGetUniformLocation(shaderID, "view");
+  GLint projLoc = glGetUniformLocation(shaderID, "projection");
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+  glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
   for (SceneObject &object : sceneObjects) {
-
-    ShapeFactory::drawObject(object, shader, view, projection);
+    ShapeFactory::drawObject(object, shaderID, view, projection);
   }
 }
 int main() {
@@ -452,12 +467,17 @@ int main() {
     std::cout << "Failed to load windmill.obj" << std::endl;
   }
 
-  GLuint objectShader = LoadShaders("object.vert", "object.frag");
+  // Use Shader class instead of GLuint for lighting support
+  Shader objectShader("object.vert", "object.frag");
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
   initDroneMarker();
   initScreenQuad();
+
+  g_lightManager.getDroneLight().diffuse = glm::vec3(3.0f, 3.0f, 3.0f);   // 3x brighter
+  g_lightManager.getDroneLight().ambient = glm::vec3(0.4f, 0.4f, 0.4f);    // Higher ambient
+  g_lightManager.getDroneLight().specular = glm::vec3(2.0f, 2.0f, 2.0f);   // Brighter specular
 
   initFramebuffer(fbWidth, fbHeight);
   float hudVertices[] = {
@@ -759,6 +779,15 @@ int main() {
   static bool nPressedLast = false;
   glm::vec3 lastCamPos;
 
+  // F-key press tracking
+  static bool f1Pressed = false;
+  static bool f2Pressed = false;
+  static bool f3Pressed = false;
+  static bool f4Pressed = false;
+  
+  // Debug frame counter
+  static int debugFrameCount = 0;
+
   while (!glfwWindowShouldClose(window)) {
     lastCamPos = camera->Position;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
@@ -777,6 +806,55 @@ int main() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
 
+    // ─────────────────────────────────────────────────────────────
+    // LIGHTING CONTROLS (F1-F4)
+    // ─────────────────────────────────────────────────────────────
+    
+    // F1: Toggle sun
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+      if (!f1Pressed) {
+        g_lightManager.toggleSun();
+        g_lightManager.printLightState();
+        f1Pressed = true;
+      }
+    } else {
+      f1Pressed = false;
+    }
+
+    // F2: Night mode
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+      if (!f2Pressed) {
+        g_lightManager.setNightMode();
+        g_lightManager.printLightState();
+        f2Pressed = true;
+      }
+    } else {
+      f2Pressed = false;
+    }
+
+    // F3: Day mode
+    if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
+      if (!f3Pressed) {
+        g_lightManager.setDayMode();
+        g_lightManager.printLightState();
+        f3Pressed = true;
+      }
+    } else {
+      f3Pressed = false;
+    }
+
+    // F4: Toggle drone light
+    if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS) {
+      if (!f4Pressed) {
+        g_lightManager.toggleDroneLight();
+        g_lightManager.printLightState();
+        f4Pressed = true;
+      }
+    } else {
+      f4Pressed = false;
+    }
+
+    // Camera movement
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
       camera->processKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -809,10 +887,30 @@ int main() {
       rollOffset += 0.5;
 
     camera->processRoll(rollOffset);
+    
+    // ─────────────────────────────────────────────────────────────
+    // UPDATE DRONE LIGHT POSITION AND DIRECTION
+    // ─────────────────────────────────────────────────────────────
+    // Get camera front direction (where the drone/camera is looking)
+    glm::vec3 cameraFront = camera->getFront();
+    glm::vec3 cameraPos = camera->Position;
+    
+    // Update drone light position (attached to camera)
+    g_lightManager.getDroneLight().position = cameraPos;
+    
+    // Update drone light direction (pointing where camera looks)
+    g_lightManager.getDroneLight().direction = cameraFront;
+    
+    // Debug print every 300 frames
+    if (debugFrameCount++ % 300 == 0) {
+        std::cout << "Drone Light Pos: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << std::endl;
+        std::cout << "Drone Light Dir: (" << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << ")" << std::endl;
+        std::cout << "Drone Light Enabled: " << g_lightManager.getDroneLight().enabled << std::endl;
+    }
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Main camera
-
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     glm::mat4 view = camera->getViewMatrix();
@@ -821,6 +919,12 @@ int main() {
         camera->getProjectionMatrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // Bind lights before rendering scene
+    objectShader.use();
+    g_lightManager.bindAllLights(objectShader);
+    objectShader.setVec3("viewPos", camera->Position);
+    
     renderScene(sceneObjects, objectShader, view, projection);
     glm::vec3 dronePos = camera->Position;
     float droneRadius = 0.6f;
@@ -833,6 +937,12 @@ int main() {
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
+    
+    // Bind lights for terrain
+    objectShader.use();
+    g_lightManager.bindAllLights(objectShader);
+    objectShader.setVec3("viewPos", camera->Position);
+    
     terrain->draw(view, projection);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -851,7 +961,6 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // HUD minimap
-
     glViewport(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);
 
     glEnable(GL_SCISSOR_TEST);
@@ -869,7 +978,6 @@ int main() {
     glDisable(GL_SCISSOR_TEST);
 
     // HUD tint
-
     glViewport(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);
 
     glUseProgram(hudShader);
@@ -888,7 +996,6 @@ int main() {
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     // Drone marker
-
     drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -897,6 +1004,10 @@ int main() {
 
     if (windmill != nullptr) {
       glm::mat4 model = glm::mat4(1.0f);
+      // Bind lights for windmill
+      objectShader.use();
+      g_lightManager.bindAllLights(objectShader);
+      objectShader.setVec3("viewPos", camera->Position);
       windmill->draw(view, projection, model);
     }
 

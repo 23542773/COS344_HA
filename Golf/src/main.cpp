@@ -184,6 +184,29 @@ Mesh* createStraightHole(glm::vec3 start, glm::vec3 end, float width) {
 
 //------------------------------------------------------------------------
 
+// Helper to place a path segment and its borders
+void addHoleSegment(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
+    // The putting surface
+    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
+    
+    // Add border logic here based on scale (or just manually place borders for now)
+}
+
+void addHolePath(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
+    // Putting surface
+    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
+    
+    // Left border
+    addBorder(scene, pos + glm::vec3(-scale.x/2 - 0.2f, 0.3f, 0), glm::vec3(0.4f, 0.7f, scale.z), rot);
+    // Right border
+    addBorder(scene, pos + glm::vec3(scale.x/2 + 0.2f, 0.3f, 0), glm::vec3(0.4f, 0.7f, scale.z), rot);
+}
+
+void buildHole(std::vector<SceneObject> &scene, glm::vec3 pathPos, glm::vec3 pathScale, glm::vec3 cupPos) {
+    addHolePath(scene, pathPos, pathScale, glm::vec3(0));
+    addHoleCup(scene, cupPos);
+}
+
 int main() {
   GLFWwindow *window;
 
@@ -194,7 +217,7 @@ int main() {
     return -1;
   }
 
-  camera = new Camera(glm::vec3(0.0f, 2.0f, 5.0f), -90.0f, 0.0f);
+  camera = new Camera(glm::vec3(40.0f, 20.0f, 40.0f), -90.0f, -45.0f);
 
   float deltaTime = 0.0f;
   float lastFrame = 0.0f;
@@ -212,12 +235,6 @@ int main() {
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
 
-  // Lay out Hole 3
-    // Assuming (0,0) is bottom-left of your 79x48 grid. Let's place it at roughly X=15, Z=10
-    glm::vec3 hole3_start(15.0f, 0.0f, 10.0f); 
-    glm::vec3 hole3_end(15.0f, 0.0f, 25.0f); // 15 meters long
-    Mesh* hole3Segment1 = createStraightHole(hole3_start, hole3_end, 2.0f); // 2 meter width
-
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
@@ -231,119 +248,206 @@ int main() {
   // any scene code goes here, just push objects onto the sceneObjects vector
 
   std::vector<SceneObject> sceneObjects;
-  // hole 1
-  glm::vec3 turf(0.1f, 0.7f, 0.2f);
-  glm::vec3 border(0.18f, 0.09f, 0.03f);
-  glm::vec3 holeColor(0.01f, 0.01f, 0.01f);
 
+  float offsetX = 5.0f; // Shift everything into the positive zone
+  float offsetZ = 5.0f;
+
+  // =====================
+  // HOLE 1 - Elevated platform with incline down to green
+  // =====================
   glm::vec3 inclineRot(0.0f, 90.0f, 8.0f);
 
   // Top start platform
   sceneObjects.push_back(ShapeFactory::createCube(
       glm::vec3(33.0f, 1.4f, 16.5f), glm::vec3(6.0f, 0.3f, 3.0f),
-      glm::vec3(0.0f, 0.0f, 0.0f), turf));
+      glm::vec3(0.0f), turf));
 
-  // Top platform borders (NO back edge - connects to incline)
-  addBorder(sceneObjects, glm::vec3(33.0f, 1.7f, 15.0f),
-            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f, 0.0f, 0.0f));
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.7f, 15.0f), glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.7f, 16.5f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.7f, 16.5f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
 
-  addBorder(sceneObjects, glm::vec3(30.0f, 1.7f, 16.5f),
-            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
-  addBorder(sceneObjects, glm::vec3(36.0f, 1.7f, 16.5f),
-            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
-  // incline plane
-  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 1.0f, 20.8f),
-                                                  glm::vec3(6.0f, 0.3f, 4.0f),
-                                                  inclineRot, turf));
+  // Incline
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.0f, 1.0f, 20.8f), glm::vec3(6.0f, 0.3f, 4.0f), inclineRot, turf));
 
   // Bottom flat platform
-  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 0.7f, 24.5f),
-                                                  glm::vec3(6.0f, 0.3f, 3.0f),
-                                                  glm::vec3(0.0f), turf));
-
-  // Bottom platform borders (NO top edge - connects to incline)
-  addBorder(sceneObjects, glm::vec3(33.0f, 1.0f, 26.0f),
-            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f));
-
-  addBorder(sceneObjects, glm::vec3(30.0f, 1.0f, 24.5f),
-            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
-
-  addBorder(sceneObjects, glm::vec3(36.0f, 1.0f, 24.5f),
-            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
-
-  addHoleCup(sceneObjects, glm::vec3(33.0f, 0.9f, 24.5f));
-  // hole 2
-
-  // Left (vertical bar of U)
   sceneObjects.push_back(ShapeFactory::createCube(
-      glm::vec3(-36.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
-      glm::vec3(0.0f), turf));
+      glm::vec3(33.0f, 0.7f, 24.5f), glm::vec3(6.0f, 0.3f, 3.0f), glm::vec3(0.0f), turf));
 
-  // Bottom (middle of U)
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.0f, 26.0f), glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.0f, 24.5f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.0f, 24.5f), glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
+
+  addHoleCup(sceneObjects, glm::vec3(33.0f, 0.85f, 24.5f)); // FIXED: raised slightly to sit on surface
+
+  // =====================
+  // HOLE 2 - U-shape / C-shape path
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(5.0f, 0.2f, 20.0f),  glm::vec3(3.0f, 0.3f, 12.0f), glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(11.0f, 0.2f, 24.5f), glm::vec3(15.0f, 0.3f, 3.0f), glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(17.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(17.0f, 0.35f, 15.5f)); // FIXED: sits on surface
+
+  // =====================
+  // HOLE 3 - Straight path near water feature
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(30.0f, 0.2f, 10.0f), glm::vec3(3.0f, 0.3f, 10.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(30.0f, 0.35f, 6.5f)); // FIXED: cup at far end
+
+  // =====================
+  // HOLE 4 - L-shape
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(40.0f, 0.2f, 10.0f), glm::vec3(3.0f, 0.3f, 6.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(45.5f, 0.2f, 7.5f),  glm::vec3(9.0f, 0.3f, 3.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(50.0f, 0.35f, 7.5f)); // FIXED: aligned to end of path
+
+  // =====================
+  // HOLE 5 - Bottom-left, straight with slight dogleg right
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(5.0f, 0.2f, 35.0f),  glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(9.0f, 0.2f, 39.5f),  glm::vec3(11.0f, 0.3f, 3.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(14.5f, 0.35f, 39.5f));
+
+  // =====================
+  // HOLE 6 - Center-left, zigzag
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(15.0f, 0.2f, 30.0f), glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(19.0f, 0.2f, 26.5f), glm::vec3(11.0f, 0.3f, 3.0f), glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(25.0f, 0.2f, 30.0f), glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(25.0f, 0.35f, 34.0f));
+
+  // =====================
+  // HOLE 7 - Top-center, with over-cover (roof obstacle)
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(45.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 10.0f), glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(50.0f, 0.2f, 16.5f), glm::vec3(7.0f, 0.3f, 3.0f),  glm::vec3(0));
+  // Over-cover: a flat cube acting as a roof over part of the path
   sceneObjects.push_back(ShapeFactory::createCube(
-      glm::vec3(-30.0f, 0.2f, 24.5f), glm::vec3(15.0f, 0.3f, 3.0f),
-      glm::vec3(0.0f), turf));
-
-  // Right (vertical bar of U)
+      glm::vec3(45.0f, 2.5f, 20.0f), glm::vec3(3.2f, 0.3f, 6.0f), glm::vec3(0), concrete));
+  // Cover support pillars
   sceneObjects.push_back(ShapeFactory::createCube(
-      glm::vec3(-24.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
-      glm::vec3(0.0f), turf));
+      glm::vec3(43.5f, 1.3f, 18.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(46.5f, 1.3f, 18.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(43.5f, 1.3f, 22.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(46.5f, 1.3f, 22.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  addHoleCup(sceneObjects, glm::vec3(53.5f, 0.35f, 16.5f));
 
-  // borders
-  // left outside
-  addBorder(sceneObjects, glm::vec3(-37.5f, 0.5f, 20.0f),
-            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 8 - Adjacent to 7, also with over-cover
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(55.0f, 0.2f, 22.0f), glm::vec3(3.0f, 0.3f, 10.0f), glm::vec3(0));
+  // Over-cover
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(55.0f, 2.5f, 22.0f), glm::vec3(3.2f, 0.3f, 6.0f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(53.5f, 1.3f, 20.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(56.5f, 1.3f, 20.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(53.5f, 1.3f, 24.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(56.5f, 1.3f, 24.0f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  addHoleCup(sceneObjects, glm::vec3(55.0f, 0.35f, 17.5f));
 
-  // right outside
-  addBorder(sceneObjects, glm::vec3(-22.5f, 0.5f, 20.0f),
-            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 9 - Right side, long path with tunnel
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(62.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 14.0f), glm::vec3(0));
+  // Tunnel section: a hollow box effect using a cover + side walls
+  // Tunnel roof
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(62.0f, 1.8f, 20.0f), glm::vec3(3.2f, 0.3f, 5.0f), glm::vec3(0), concrete));
+  // Tunnel walls
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(60.4f, 1.0f, 20.0f), glm::vec3(0.3f, 1.8f, 5.0f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(63.6f, 1.0f, 20.0f), glm::vec3(0.3f, 1.8f, 5.0f), glm::vec3(0), concrete));
+  addHolePath(sceneObjects, glm::vec3(62.0f, 0.2f, 10.0f),  glm::vec3(3.0f, 0.3f, 4.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(62.0f, 0.35f, 8.0f));
 
-  // top left
-  addBorder(sceneObjects, glm::vec3(-36.0f, 0.5f, 14.0f),
-            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 10 - Bottom-center, L-shape
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(35.0f, 0.2f, 38.0f), glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(40.0f, 0.2f, 42.5f), glm::vec3(7.0f, 0.3f, 3.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(44.0f, 0.35f, 42.5f));
 
-  // top right
-  addBorder(sceneObjects, glm::vec3(-24.0f, 0.5f, 14.0f),
-            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 11 - Bottom area, straight
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(50.0f, 0.2f, 38.0f), glm::vec3(3.0f, 0.3f, 10.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(50.0f, 0.35f, 33.5f));
 
-  // Bottom outer (closed U bottom)
-  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 26.0f),
-            glm::vec3(15.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 12 - Bottom-right, dogleg left
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(58.0f, 0.2f, 38.0f), glm::vec3(3.0f, 0.3f, 6.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(54.5f, 0.2f, 35.5f), glm::vec3(10.0f, 0.3f, 3.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(50.0f, 0.35f, 35.5f));
 
-  // Inner borders
+  // =====================
+  // HOLE 13 - Right side, long straight
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(68.0f, 0.2f, 25.0f), glm::vec3(3.0f, 0.3f, 16.0f), glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(68.0f, 0.35f, 17.5f));
 
-  // Left inner vert
-  addBorder(sceneObjects, glm::vec3(-34.5f, 0.5f, 18.5f),
-            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 14 - Top-center, with slope (incline)
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(22.0f, 0.2f, 5.0f),  glm::vec3(3.0f, 0.3f, 6.0f),  glm::vec3(0));
+  // Inclined section
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(22.0f, 0.55f, 9.2f), glm::vec3(3.0f, 0.3f, 3.5f),
+      glm::vec3(8.0f, 0.0f, 0.0f), turf));
+  addHolePath(sceneObjects, glm::vec3(22.0f, 0.9f, 12.5f), glm::vec3(3.0f, 0.3f, 4.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(22.0f, 1.05f, 12.5f));
 
-  // Right inner vert
-  addBorder(sceneObjects, glm::vec3(-25.5f, 0.5f, 18.5f),
-            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 15 - Center, over-cover
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(32.0f, 0.2f, 30.0f), glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(32.0f, 2.5f, 30.0f), glm::vec3(3.2f, 0.3f, 5.0f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(30.4f, 1.3f, 28.5f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.6f, 1.3f, 28.5f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(30.4f, 1.3f, 31.5f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.6f, 1.3f, 31.5f), glm::vec3(0.3f, 2.4f, 0.3f), glm::vec3(0), concrete));
+  addHoleCup(sceneObjects, glm::vec3(32.0f, 0.35f, 26.5f));
 
-  // Bottom inner
-  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 23.0f),
-            glm::vec3(10.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+  // =====================
+  // HOLE 16 - Top-left, near water feature
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(8.0f, 0.2f, 5.0f),   glm::vec3(3.0f, 0.3f, 8.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(12.5f, 0.2f, 9.5f),  glm::vec3(7.0f, 0.3f, 3.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(16.5f, 0.35f, 9.5f));
 
-  // hole placement
-  addHoleCup(sceneObjects, glm::vec3(-24.0f, 0.3f, 16.0f));
-  // hole 3
-  // hole 4
-  // hole 5
-  // hole 6
-  // hole 7
-  // hole 8
-  // hole 9
-  // hole 10
-  // hole 11
-  // hole 12
-  // hole 13
-  // hole 14
-  // hole 15
-  // hole 16
-  // hole 17
-  // hole 18
+  // Water feature near holes 3 & 16 (blue flat plane)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(12.0f, 0.15f, 14.0f), glm::vec3(8.0f, 0.1f, 6.0f), glm::vec3(0), water));
+
+  // =====================
+  // HOLE 17 - Center-bottom
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(42.0f, 0.2f, 32.0f), glm::vec3(3.0f, 0.3f, 6.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(38.0f, 0.2f, 29.5f), glm::vec3(5.0f, 0.3f, 3.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(35.5f, 0.35f, 29.5f));
+
+  // =====================
+  // HOLE 18 - Bottom-left, finishing hole, slight dogleg
+  // =====================
+  addHolePath(sceneObjects, glm::vec3(8.0f, 0.2f, 42.0f),  glm::vec3(3.0f, 0.3f, 6.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(13.0f, 0.2f, 38.5f), glm::vec3(7.0f, 0.3f, 3.0f),  glm::vec3(0));
+  addHolePath(sceneObjects, glm::vec3(17.0f, 0.2f, 34.5f), glm::vec3(3.0f, 0.3f, 5.0f),  glm::vec3(0));
+  addHoleCup(sceneObjects, glm::vec3(17.0f, 0.35f, 32.0f));
+
+  
   while (!glfwWindowShouldClose(window)) {
 
     float currentFrame = glfwGetTime();
@@ -400,12 +504,6 @@ int main() {
     skybox->draw(skyboxView, projection, isNight);
 
     terrain->draw(view, projection);
-
-    // Draw Hole 3
-    if (hole3Segment1) {
-        glm::mat4 model = glm::mat4(1.0f);
-        hole3Segment1->draw(view, projection, model);
-    }
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {

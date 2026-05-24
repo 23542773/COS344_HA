@@ -4,6 +4,14 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
+enum ColliderType { NONE, AABB, SPHERE };
+
+struct Collider {
+  ColliderType type;
+  glm::vec3 center;
+  glm::vec3 halfSize; // for AABB
+  float radius;       // for sphere
+};
 
 struct SceneObject {
   GLuint VAO;
@@ -21,6 +29,7 @@ struct SceneObject {
 
   bool textured;
   bool transparent;
+  Collider collider;
 };
 class ShapeFactory {
 public:

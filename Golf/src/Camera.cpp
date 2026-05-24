@@ -3,7 +3,7 @@
 #include <cmath>
 
 Camera::Camera(glm::vec3 position, float yaw, float pitch)
-    : Front(0.0f, 0.0f, -1.0f), MovementSpeed(5.0f), MouseSensitivity(0.1f),
+    : Front(0.0f, 0.0f, -1.0f), MovementSpeed(5.0f), MouseSensitivity(0.01f),
       Zoom(60.0f), aspectRatio(16.0f / 9.0f), orbitMode(false),
       orbitTarget(0.0f, 0.0f, 0.0f), orbitDistance(10.0f) {
   Position = position;
@@ -52,6 +52,8 @@ glm::mat4 Camera::getOrthographicProjection(float width, float height) {
 void Camera::setAspectRatio(float aspect) { aspectRatio = aspect; }
 
 float Camera::getYaw() { return this->Yaw; }
+
+glm::vec3 Camera::getFront() { return this->Front; }
 
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
   float velocity = MovementSpeed * deltaTime;

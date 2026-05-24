@@ -40,6 +40,9 @@ GLuint hudVAO, hudVBO;
 GLuint droneVAO, droneVBO;
 GLuint droneShader;
 
+GLuint crosshairVAO, crosshairVBO;
+GLuint crosshairShader;
+
 GLuint sceneFBO;
 GLuint sceneTexture;
 GLuint sceneDepthRBO;
@@ -127,6 +130,36 @@ inline GLFWwindow *setUp() {
 
   return window;
 }
+
+void initCrosshair() {
+
+  // Two lines crossing in the middle
+  // Horizontal line then vertical line
+
+  float crosshairVertices[] = {
+
+      // horizontal
+      -10.0f, 0.0f, 10.0f, 0.0f,
+
+      // vertical
+      0.0f, -10.0f, 0.0f, 10.0f};
+
+  glGenVertexArrays(1, &crosshairVAO);
+  glGenBuffers(1, &crosshairVBO);
+
+  glBindVertexArray(crosshairVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(crosshairVertices), crosshairVertices,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+
+  glEnableVertexAttribArray(0);
+
+  glBindVertexArray(0);
+}
+
 void initFramebuffer(int width, int height) {
   glGenFramebuffers(1, &sceneFBO);
   glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
@@ -302,6 +335,32 @@ void initDroneMarker() {
   glBindVertexArray(0);
 }
 
+void drawCrosshair() {
+
+  glUseProgram(crosshairShader);
+
+  glBindVertexArray(crosshairVAO);
+
+  glDisable(GL_DEPTH_TEST);
+
+  glUniform2f(glGetUniformLocation(crosshairShader, "uResolution"),
+              (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
+
+  glUniform2f(glGetUniformLocation(crosshairShader, "uCenter"),
+              WINDOW_WIDTH * 0.5f, WINDOW_HEIGHT * 0.5f);
+
+  glUniform4f(glGetUniformLocation(crosshairShader, "uColor"), 1.0f, 1.0f, 1.0f,
+              1.0f);
+
+  glLineWidth(1.0f);
+
+  glDrawArrays(GL_LINES, 0, 4);
+
+  glEnable(GL_DEPTH_TEST);
+
+  glBindVertexArray(0);
+}
+
 void drawFilledRect(float x, float y, float width, float height,
                     glm::vec4 color) {
 
@@ -472,7 +531,9 @@ int main() {
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
+  crosshairShader = LoadShaders("crosshair.vert", "crosshair.frag");
   initDroneMarker();
+  initCrosshair();
   initScreenQuad();
 
   g_lightManager.getDroneLight().diffuse =
@@ -1014,6 +1075,8 @@ int main() {
 
     // Drone marker
     drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);
+    // Crosshair
+    drawCrosshair();
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;

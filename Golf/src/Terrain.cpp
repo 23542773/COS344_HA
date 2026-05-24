@@ -1,6 +1,8 @@
 #include "Terrain.h"
+#include <glm/gtc/type_ptr.hpp>
 
 Terrain::Terrain(int width, int depth) {
+    shaderProgram = LoadShaders("terrain.vert", "terrain.frag");
     setupTerrain(width, depth);
 }
 
@@ -59,7 +61,17 @@ void Terrain::setupTerrain(int width, int depth) {
     glBindVertexArray(0);
 }
 
-void Terrain::draw() {
+void Terrain::draw(glm::mat4 view, glm::mat4 projection) {
+    glUseProgram(shaderProgram);
+
+    // Set the uniforms
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    
+    // The terrain is our base, so the model matrix is just an identity matrix (no translation/rotation yet)
+    glm::mat4 model = glm::mat4(1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

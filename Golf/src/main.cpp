@@ -456,11 +456,13 @@ int main() {
   // hole 16
   // hole 17
   // hole 18
+  float rollOffset = 0;
   while (!glfwWindowShouldClose(window)) {
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+    rollOffset = 0;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
@@ -491,11 +493,12 @@ int main() {
       camera->Zoom -= 0.5f;
 
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-      camera->processMouseMovement(-1.0f, 0.0f);
+      rollOffset -= 0.5;
 
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-      camera->processMouseMovement(1.0f, 0.0f);
+      rollOffset += 0.5;
 
+    camera->processRoll(rollOffset);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Main camera

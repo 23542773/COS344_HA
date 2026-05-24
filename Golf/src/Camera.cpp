@@ -11,8 +11,19 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch)
   Pitch = pitch;
   WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
   updateCameraVectors();
+  Roll = 0.0f;
 }
+void Camera::processRoll(float offset) {
+  Roll += offset * MouseSensitivity;
 
+  // optional clamp to avoid flipping
+  if (Roll > 180.0f)
+    Roll -= 360.0f;
+  if (Roll < -180.0f)
+    Roll += 360.0f;
+
+  updateCameraVectors();
+}
 glm::mat4 Camera::getViewMatrix() {
   if (orbitMode)
     updateOrbitPosition();
@@ -112,6 +123,13 @@ void Camera::updateCameraVectors() {
   front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
 
   Front = glm::normalize(front);
-  Right = glm::normalize(glm::cross(Front, WorldUp));
+
+  glm::vec3 right = glm::normalize(glm::cross(Front, WorldUp));
+
+  float rollRad = glm::radians(Roll);
+
+  glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), rollRad, Front);
+
+  Right = glm::normalize(glm::vec3(rollMat * glm::vec4(right, 0.0f)));
   Up = glm::normalize(glm::cross(Right, Front));
 }

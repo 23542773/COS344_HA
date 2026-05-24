@@ -19,6 +19,7 @@ public:
   void processKeyboard(Camera_Movement direction, float deltaTime);
   void processMouseMovement(float xoffset, float yoffset);
   void processMouseScroll(float yoffset);
+  void processRoll(float offset);
 
   float getYaw();
 
@@ -40,6 +41,7 @@ private:
 
   float Yaw;
   float Pitch;
+  float Roll;
 
   glm::vec3 Front;
   glm::vec3 Up;

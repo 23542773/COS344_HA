@@ -393,6 +393,7 @@ bool collide(const glm::vec3 &position, float radius, const SceneObject &obj) {
 
   return false;
 }
+
 void initScreenQuad() {
   float quad[] = {-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
 
@@ -430,6 +431,7 @@ void renderScene(std::vector<SceneObject> &sceneObjects, Shader &shader,
     ShapeFactory::drawObject(object, shaderID, view, projection);
   }
 }
+
 int main() {
   GLFWwindow *window;
 
@@ -475,12 +477,10 @@ int main() {
   initDroneMarker();
   initScreenQuad();
 
-  g_lightManager.getDroneLight().diffuse =
-      glm::vec3(3.0f, 3.0f, 3.0f); // 3x brighter
-  g_lightManager.getDroneLight().ambient =
-      glm::vec3(0.4f, 0.4f, 0.4f); // Higher ambient
-  g_lightManager.getDroneLight().specular =
-      glm::vec3(2.0f, 2.0f, 2.0f); // Brighter specular
+  // Boost drone light intensity for better visibility
+  g_lightManager.getDroneLight().diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
+  g_lightManager.getDroneLight().ambient = glm::vec3(0.4f, 0.4f, 0.4f);
+  g_lightManager.getDroneLight().specular = glm::vec3(2.0f, 2.0f, 2.0f);
 
   initFramebuffer(fbWidth, fbHeight);
   float hudVertices[] = {
@@ -637,25 +637,31 @@ int main() {
   float rollOffset = 0;
   static bool nPressedLast = false;
   glm::vec3 lastCamPos;
-  static bool gPressedLast = false;
-  bool grayscale = false;
+
+  // Auto day/night cycle variables
+  static float timeOfDay = 0.5f;      // Start at noon (0.5)
+  static float cycleSpeed = 0.0001;  // Full cycle in ~33 minutes at 60fps
+  static float dayNightFactor = 0.0f;
+  static bool autoCycleActive = true;
 
   // F-key press tracking
   static bool f1Pressed = false;
   static bool f2Pressed = false;
   static bool f3Pressed = false;
   static bool f4Pressed = false;
-
+  
   // Debug frame counter
   static int debugFrameCount = 0;
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window))
+  {
     lastCamPos = camera->Position;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     rollOffset = 0;
+    
     bool nPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
 
     if (nPressed && !nPressedLast) {
@@ -664,21 +670,13 @@ int main() {
 
     nPressedLast = nPressed;
 
-    bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
-
-    if (gPressed && !gPressedLast) {
-      grayscale = !grayscale;
-    }
-
-    gPressedLast = gPressed;
-
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
 
     // ─────────────────────────────────────────────────────────────
     // LIGHTING CONTROLS (F1-F4)
     // ─────────────────────────────────────────────────────────────
-
+    
     // F1: Toggle sun
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
       if (!f1Pressed) {
@@ -756,30 +754,114 @@ int main() {
       rollOffset += 0.5;
 
     camera->processRoll(rollOffset);
-
+    
+    // ─────────────────────────────────────────────────────────────
+    // SMOOTH AUTO DAY/NIGHT CYCLE
+    // F5: Resume auto cycle (if manually overridden)
+    // F2/F3: Manual override to night/day
+    // ─────────────────────────────────────────────────────────────
+    
+    // F5: Resume auto cycle (clear manual override)
+    static bool f5Pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+        if (!f5Pressed) {
+            g_lightManager.resumeAutoCycle();
+            f5Pressed = true;
+        }
+    } else {
+        f5Pressed = false;
+    }
+    
+    // Update time of day (always running, but only applied if not manually overridden)
+    timeOfDay += cycleSpeed * deltaTime * 60.0f;
+    if (timeOfDay >= 1.0f) timeOfDay -= 1.0f;
+    
+    // Map time to day/night factor with smooth transitions
+    float factor;
+    if (timeOfDay < 0.60f) {
+        factor = 0.0f;  // Full day
+    } else if (timeOfDay < 0.65f) {
+        // Sunset transition (0.60 to 0.65) - longer for smoother transition
+        float t = (timeOfDay - 0.60f) / 0.05f;
+        factor = t;
+    } else if (timeOfDay < 0.80f) {
+        factor = 1.0f;  // Full night
+    } else if (timeOfDay < 0.85f) {
+        // Sunrise transition (0.80 to 0.85)
+        float t = (timeOfDay - 0.80f) / 0.05f;
+        factor = 1.0f - t;
+    } else {
+        factor = 0.0f;  // Full day
+    }
+    
+    dayNightFactor = factor;
+    
+    // Apply smooth lighting transition (respects manualOverride internally)
+    g_lightManager.setDayNightFactor(dayNightFactor);
+    
+    // Update skybox with hysteresis to prevent rapid switching
+    static bool lastSkyboxNight = false;
+    static float switchHysteresis = 0.1f;  // 10% buffer zone
+    
+    bool shouldBeNight;
+    if (dayNightFactor > 0.6f) {
+        shouldBeNight = true;
+    } else if (dayNightFactor < 0.4f) {
+        shouldBeNight = false;
+    } else {
+        shouldBeNight = lastSkyboxNight;  // Stay in current state in the middle
+    }
+    
+    if (shouldBeNight != lastSkyboxNight) {
+        isNight = shouldBeNight;
+        lastSkyboxNight = shouldBeNight;
+        std::cout << "Skybox switched to: " << (isNight ? "NIGHT" : "DAY") 
+                  << " (factor: " << dayNightFactor << ")" << std::endl;
+    }
+    
+    // Rotate sun continuously
+    float sunAngle;
+    if (timeOfDay < 0.25f) {
+        sunAngle = 180.0f + (timeOfDay / 0.25f) * 90.0f;
+    } else if (timeOfDay < 0.75f) {
+        sunAngle = (timeOfDay - 0.25f) / 0.5f * 180.0f;
+    } else {
+        sunAngle = 180.0f + (timeOfDay - 0.75f) / 0.25f * 90.0f;
+    }
+    
+    float rad = glm::radians(sunAngle);
+    glm::vec3 sunDir = glm::normalize(glm::vec3(cos(rad), -sin(rad), 0.3f));
+    g_lightManager.setSunDirection(sunDir);
+    
+    // Debug print less frequently
+    static int cycleDebugFrame = 0;
+    if (cycleDebugFrame++ % 600 == 0) {
+        std::cout << "Auto Cycle - Time: " << timeOfDay << " | Factor: " << dayNightFactor 
+                  << " | Sun Angle: " << sunAngle << "°"
+                  << " | Manual Override: " << (g_lightManager.isManualOverride() ? "YES" : "NO")
+                  << std::endl;
+    }
+    
     // ─────────────────────────────────────────────────────────────
     // UPDATE DRONE LIGHT POSITION AND DIRECTION
     // ─────────────────────────────────────────────────────────────
     // Get camera front direction (where the drone/camera is looking)
     glm::vec3 cameraFront = camera->getFront();
     glm::vec3 cameraPos = camera->Position;
-
+    
     // Update drone light position (attached to camera)
     g_lightManager.getDroneLight().position = cameraPos;
-
+    
     // Update drone light direction (pointing where camera looks)
     g_lightManager.getDroneLight().direction = cameraFront;
-
+    
     // Debug print every 300 frames
     if (debugFrameCount++ % 300 == 0) {
-      std::cout << "Drone Light Pos: (" << cameraPos.x << ", " << cameraPos.y
-                << ", " << cameraPos.z << ")" << std::endl;
-      std::cout << "Drone Light Dir: (" << cameraFront.x << ", "
-                << cameraFront.y << ", " << cameraFront.z << ")" << std::endl;
-      std::cout << "Drone Light Enabled: "
-                << g_lightManager.getDroneLight().enabled << std::endl;
+        std::cout << "Drone Light Pos: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << std::endl;
+        std::cout << "Drone Light Dir: (" << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << ")" << std::endl;
+        std::cout << "Drone Light Enabled: " << g_lightManager.getDroneLight().enabled << std::endl;
     }
-
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Main camera
@@ -791,12 +873,12 @@ int main() {
         camera->getProjectionMatrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
     // Bind lights before rendering scene
     objectShader.use();
     g_lightManager.bindAllLights(objectShader);
     objectShader.setVec3("viewPos", camera->Position);
-
+    
     renderScene(sceneObjects, objectShader, view, projection);
     glm::vec3 dronePos = camera->Position;
     float droneRadius = 0.6f;
@@ -809,12 +891,12 @@ int main() {
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
-
+    
     // Bind lights for terrain
     objectShader.use();
     g_lightManager.bindAllLights(objectShader);
     objectShader.setVec3("viewPos", camera->Position);
-
+    
     terrain->draw(view, projection);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -822,7 +904,6 @@ int main() {
     glUseProgram(screenShader);
 
     glUniform1i(glGetUniformLocation(screenShader, "nightMode"), isNight);
-    glUniform1i(glGetUniformLocation(screenShader, "grayscale"), grayscale);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTexture);

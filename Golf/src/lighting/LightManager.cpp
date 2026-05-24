@@ -1,13 +1,16 @@
 #include "LightManager.h"
-#include "../shader.hpp"  // Add this include
+#include "../shader.hpp"
 
 LightManager::LightManager() 
-    : isDay(true), timeOfDay(0.5f) {
+    : isDay(true), timeOfDay(0.5f), dayNightFactor(0.0f), manualOverride(false) {  // ADD manualOverride initialization
     
     dayAmbient = glm::vec3(0.3f, 0.3f, 0.35f);
     nightAmbient = glm::vec3(0.05f, 0.05f, 0.1f);
     daySunDiffuse = glm::vec3(1.0f, 0.95f, 0.9f);
     nightSunDiffuse = glm::vec3(0.3f, 0.3f, 0.6f);
+    
+    currentSunAmbient = dayAmbient;
+    currentSunDiffuse = daySunDiffuse;
     
     initCourseLights();
     updateLightColours();
@@ -57,8 +60,71 @@ void LightManager::updateLightColours() {
     }
 }
 
+void LightManager::setDayNightFactor(float factor) {
+    // If manually overridden, don't auto-update
+    if (manualOverride) return;
+    
+    dayNightFactor = glm::clamp(factor, 0.0f, 1.0f);
+    updateSmoothLighting();
+}
+
+void LightManager::updateSmoothLighting() {
+    // Interpolate sun lighting between day and night values
+    currentSunAmbient = glm::mix(dayAmbient, nightAmbient, dayNightFactor);
+    currentSunDiffuse = glm::mix(daySunDiffuse, nightSunDiffuse, dayNightFactor);
+    
+    sun.ambient = currentSunAmbient;
+    sun.diffuse = currentSunDiffuse;
+    
+    // Fade point lights in/out smoothly based on night factor
+    float pointLightIntensity = dayNightFactor;  // 0 at day, 1 at night
+    
+    for (auto& light : pointLights) {
+        if (pointLightIntensity > 0.05f) {
+            light.enabled = true;
+            float intensityScale = glm::clamp(pointLightIntensity * 1.5f, 0.0f, 1.0f);
+            light.diffuse = glm::mix(glm::vec3(0.0f), glm::vec3(0.9f, 0.8f, 0.7f), intensityScale);
+        } else {
+            light.enabled = false;
+        }
+    }
+    
+    // Update isDay flag based on factor (for skybox switching)
+    bool newIsDay = (dayNightFactor < 0.5f);
+    if (newIsDay != isDay) {
+        isDay = newIsDay;
+    }
+}
+
+void LightManager::setManualOverride(bool enabled) {
+    manualOverride = enabled;
+    if (!manualOverride) {
+        updateSmoothLighting();
+    }
+}
+
+void LightManager::resumeAutoCycle() {
+    manualOverride = false;
+    std::cout << "Auto cycle resumed" << std::endl;
+}
+
+void LightManager::setNightMode() {
+    manualOverride = true;
+    isDay = false;
+    dayNightFactor = 1.0f;
+    updateSmoothLighting();
+    std::cout << "MANUAL OVERRIDE: Night mode set (auto cycle paused)" << std::endl;
+}
+
+void LightManager::setDayMode() {
+    manualOverride = true;
+    isDay = true;
+    dayNightFactor = 0.0f;
+    updateSmoothLighting();
+    std::cout << "MANUAL OVERRIDE: Day mode set (auto cycle paused)" << std::endl;
+}
+
 void LightManager::updateDayNightCycle(float deltaTime, float speed) {
-    // Optional smooth transition
     (void)deltaTime;
     (void)speed;
 }
@@ -99,19 +165,11 @@ void LightManager::toggleDroneLight() {
     droneLight.enabled = !droneLight.enabled;
 }
 
-void LightManager::setNightMode() {
-    isDay = false;
-    updateLightColours();
-}
-
-void LightManager::setDayMode() {
-    isDay = true;
-    updateLightColours();
-}
-
 void LightManager::printLightState() const {
     std::cout << "\n=== LIGHTING STATE ===" << std::endl;
+    std::cout << "Day/Night Factor: " << dayNightFactor << " (0=day, 1=night)" << std::endl;
     std::cout << "Time of Day: " << (isDay ? "DAY" : "NIGHT") << std::endl;
+    std::cout << "Manual Override: " << (manualOverride ? "ON" : "OFF") << std::endl;
     std::cout << "Sun: " << (sun.enabled ? "ON" : "OFF");
     std::cout << " Direction: (" << sun.direction.x << ", " << sun.direction.y << ", " << sun.direction.z << ")" << std::endl;
     std::cout << "Sun Ambient: (" << sun.ambient.x << ", " << sun.ambient.y << ", " << sun.ambient.z << ")" << std::endl;
@@ -124,10 +182,4 @@ void LightManager::printLightState() const {
     std::cout << "Active Point Lights: " << activePointLights << "/" << pointLights.size() << std::endl;
     std::cout << "Drone Light: " << (droneLight.enabled ? "ON" : "OFF") << std::endl;
     std::cout << "========================\n" << std::endl;
-}
-
-// In LightManager.cpp, add this function:
-void LightManager::setDroneLightIntensity(float intensity) {
-    droneLight.diffuse = glm::vec3(intensity, intensity, intensity);
-    droneLight.ambient = glm::vec3(intensity * 0.15f, intensity * 0.15f, intensity * 0.15f);
 }

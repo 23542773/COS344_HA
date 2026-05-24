@@ -40,6 +40,8 @@ glm::mat4 Camera::getOrthographicProjection(float width, float height) {
 
 void Camera::setAspectRatio(float aspect) { aspectRatio = aspect; }
 
+float Camera::getYaw() { return this->Yaw; }
+
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
   float velocity = MovementSpeed * deltaTime;
 

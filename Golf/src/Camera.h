@@ -20,6 +20,8 @@ public:
   void processMouseMovement(float xoffset, float yoffset);
   void processMouseScroll(float yoffset);
 
+  float getYaw();
+
   void setAspectRatio(float aspect);
 
   // orbit

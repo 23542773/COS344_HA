@@ -23,6 +23,8 @@
 using namespace glm;
 using namespace std;
 
+int fbWidth = 1280;
+int fbHeight = 720;
 Camera *camera;
 Terrain *terrain;
 Mesh *windmill;
@@ -159,11 +161,10 @@ void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
-const int HUD_WIDTH = 300;
-const int HUD_HEIGHT = 200;
-
-const int HUD_X = 20;
-const int HUD_Y = 20;
+const int HUD_X = fbWidth * 0.02f;
+const int HUD_Y = fbHeight * 0.02f;
+const int HUD_WIDTH = fbWidth * 0.2f;
+const int HUD_HEIGHT = fbHeight * 0.2f;
 
 glm::vec4 hudTint(0.3f, 0.3f, 0.3f, 0.25f);
 
@@ -284,6 +285,7 @@ int main() {
 
   float deltaTime = 0.0f;
   float lastFrame = 0.0f;
+  float angle = camera->getYaw();
 
   std::vector<std::string> dayFaces = {
       "assets/skybox/day_right.png", "assets/skybox/day_left.png",
@@ -455,7 +457,7 @@ int main() {
   // hole 17
   // hole 18
   while (!glfwWindowShouldClose(window)) {
-
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -523,7 +525,7 @@ int main() {
 
     glm::mat4 hudView = camera->getTopDownViewMatrix(50.0f);
 
-    glm::mat4 hudProjection = camera->getOrthographicProjection(30.0f, 20.0f);
+    glm::mat4 hudProjection = camera->getOrthographicProjection(60.0f, 40.0f);
 
     renderScene(sceneObjects, objectShader, hudView, hudProjection);
 

@@ -148,6 +148,59 @@ int main() {
 
   skybox = new Skybox(dayFaces, nightFaces);
 
+  GLuint objectShader = LoadShaders("object.vert", "object.frag");
+
+  float prismVertices[] = {
+
+      // Front triangle
+      0.0f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+      0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+
+      // Back triangle
+      0.0f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+      0.0f, 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+
+      // Left face
+      0.0f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+
+      0.0f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+      0.0f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+
+      // Right face
+      0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
+      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+
+      0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+      0.0f, 0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+
+      // Bottom face
+      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f,
+      0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,
+
+      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+      1.0f, -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f};
+
+  GLuint prismVAO, prismVBO;
+
+  glGenVertexArrays(1, &prismVAO);
+  glGenBuffers(1, &prismVBO);
+
+  glBindVertexArray(prismVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, prismVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(prismVertices), prismVertices,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
+
   while (!glfwWindowShouldClose(window)) {
 
     float currentFrame = glfwGetTime();
@@ -192,6 +245,23 @@ int main() {
 
     glm::mat4 view = camera->getViewMatrix();
     glm::mat4 projection = camera->getProjectionMatrix(1280.0f / 720.0f);
+
+    glUseProgram(objectShader);
+
+    glm::mat4 model = glm::mat4(1.0f);
+
+    glUniformMatrix4fv(glGetUniformLocation(objectShader, "model"), 1, GL_FALSE,
+                       &model[0][0]);
+
+    glUniformMatrix4fv(glGetUniformLocation(objectShader, "view"), 1, GL_FALSE,
+                       &view[0][0]);
+
+    glUniformMatrix4fv(glGetUniformLocation(objectShader, "projection"), 1,
+                       GL_FALSE, &projection[0][0]);
+
+    glBindVertexArray(prismVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 24);
+    glBindVertexArray(0);
 
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 

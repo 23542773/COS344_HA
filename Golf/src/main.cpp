@@ -13,11 +13,13 @@
 #include "Camera.h"
 #include "Skybox.h"
 #include "shader.hpp"
+#include "Terrain.h"
 
 using namespace glm;
 using namespace std;
 
 Camera *camera;
+Terrain *terrain;
 
 float lastX = 640.0f;
 float lastY = 360.0f;
@@ -149,6 +151,7 @@ int main() {
       "assets/skybox/night_front.png", "assets/skybox/night_back.png"};
 
   skybox = new Skybox(dayFaces, nightFaces);
+  terrain = new Terrain(79, 48);
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -198,6 +201,8 @@ int main() {
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
+
+    terrain->draw();
 
     GLenum err;
   while ((err = glGetError()) != GL_NO_ERROR) {

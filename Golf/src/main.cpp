@@ -140,7 +140,7 @@ Mesh* createStraightHole(glm::vec3 start, glm::vec3 end, float width) {
     glm::vec3 right = glm::normalize(glm::cross(dir, up)) * (width * 0.5f);
 
     // 1. The Green Putting Surface (y = 0.01f to sit slightly above your base terrain)
-    float surfaceY = 0.  1f;
+    float surfaceY = 0.1f;
     glm::vec3 p0 = start - right + glm::vec3(0, surfaceY, 0); // Bottom left
     glm::vec3 p1 = start + right + glm::vec3(0, surfaceY, 0); // Bottom right
     glm::vec3 p2 = end - right + glm::vec3(0, surfaceY, 0);   // Top left

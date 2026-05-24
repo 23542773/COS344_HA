@@ -3,7 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
-    shaderProgram = LoadShaders("terrain.vert", "terrain.frag"); // Reuse your green shader for now
+    shaderProgram = LoadShaders("terrain.vert", "hole.frag"); // Use the new hole shader
     setupMesh(vertices, indices);
 }
 

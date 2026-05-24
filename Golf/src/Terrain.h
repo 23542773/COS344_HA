@@ -4,12 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
-
-struct Vertex {
-    glm::vec3 position;
-    glm::vec2 texCoords;
-    glm::vec3 normal;
-};
+#include "Common.h"
 
 class Terrain {
 public:

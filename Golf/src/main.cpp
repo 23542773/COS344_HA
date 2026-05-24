@@ -14,12 +14,15 @@
 #include "Skybox.h"
 #include "shader.hpp"
 #include "Terrain.h"
+#include "Mesh.h"
+#include "utils/ObjectLoader.h"
 
 using namespace glm;
 using namespace std;
 
 Camera *camera;
 Terrain *terrain;
+Mesh *windmill;
 
 float lastX = 640.0f;
 float lastY = 360.0f;
@@ -153,6 +156,14 @@ int main() {
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
 
+  std::vector<Vertex> vertices;
+  std::vector<unsigned int> indices;
+  if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
+    windmill = new Mesh(vertices, indices);
+  } else {
+    std::cout << "Failed to load windmill.obj" << std::endl;
+  }
+
   while (!glfwWindowShouldClose(window)) {
 
     float currentFrame = glfwGetTime();
@@ -205,9 +216,13 @@ int main() {
     terrain->draw();
 
     GLenum err;
-  while ((err = glGetError()) != GL_NO_ERROR) {
-    cout << "OpenGL Error: " << err << endl;
-  }
+    while ((err = glGetError()) != GL_NO_ERROR) {
+      cout << "OpenGL Error: " << err << endl;
+    }
+
+    if (windmill != nullptr) {
+     windmill->draw();
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();

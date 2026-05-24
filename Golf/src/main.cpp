@@ -221,19 +221,59 @@ int main() {
 
   addHoleCup(sceneObjects, glm::vec3(33.0f, 0.9f, 24.5f));
   // hole 2
-  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-35, 0.2, 20),
-                                                  glm::vec3(3, 0.3, 9),
-                                                  glm::vec3(0, 0, 15), turf));
 
-  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-30, 0.2, 25),
-                                                  glm::vec3(8, 0.3, 3),
-                                                  glm::vec3(0, 0, -10), turf));
+  // Left (vertical bar of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-36.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
 
-  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(-24, 0.2, 22),
-                                                  glm::vec3(3, 0.3, 8),
-                                                  glm::vec3(0, 0, 20), turf));
+  // Bottom (middle of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-30.0f, 0.2f, 24.5f), glm::vec3(15.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f), turf));
 
-  addHoleCup(sceneObjects, glm::vec3(-23, 0.3, 18));
+  // Right (vertical bar of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-24.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
+
+  // borders
+  // left outside
+  addBorder(sceneObjects, glm::vec3(-37.5f, 0.5f, 20.0f),
+            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+
+  // right outside
+  addBorder(sceneObjects, glm::vec3(-22.5f, 0.5f, 20.0f),
+            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+
+  // top left
+  addBorder(sceneObjects, glm::vec3(-36.0f, 0.5f, 14.0f),
+            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // top right
+  addBorder(sceneObjects, glm::vec3(-24.0f, 0.5f, 14.0f),
+            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // Bottom outer (closed U bottom)
+  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 26.0f),
+            glm::vec3(15.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // Inner borders
+
+  // Left inner vert
+  addBorder(sceneObjects, glm::vec3(-34.5f, 0.5f, 18.5f),
+            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+
+  // Right inner vert
+  addBorder(sceneObjects, glm::vec3(-25.5f, 0.5f, 18.5f),
+            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+
+  // Bottom inner
+  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 23.0f),
+            glm::vec3(10.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // hole placement
+  addHoleCup(sceneObjects, glm::vec3(-24.0f, 0.3f, 16.0f));
   // hole 3
   // hole 4
   // hole 5

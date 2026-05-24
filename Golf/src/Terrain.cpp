@@ -2,7 +2,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 Terrain::Terrain(int width, int depth) {
-    shaderProgram = LoadShaders("terrain.vert", "terrain.frag");
     setupTerrain(width, depth);
 }
 
@@ -58,7 +57,7 @@ void Terrain::setupTerrain(int width, int depth) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    // Vertex Attributes
+    // Vertex Attributes (matches object.vert layout)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
     glEnableVertexAttribArray(1);
@@ -69,16 +68,18 @@ void Terrain::setupTerrain(int width, int depth) {
     glBindVertexArray(0);
 }
 
-void Terrain::draw(glm::mat4 view, glm::mat4 projection) {
+void Terrain::draw(GLuint shaderProgram, glm::mat4 view, glm::mat4 projection) {
     glUseProgram(shaderProgram);
 
-    // Set the uniforms
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    
-    // The terrain is our base, so the model matrix is just an identity matrix (no translation/rotation yet)
+    // Set model matrix (identity for terrain)
     glm::mat4 model = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    // Set texture and color for terrain
+    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 0);
+    glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.1f, 0.7f, 0.2f); // Grass color
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);

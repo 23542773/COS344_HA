@@ -64,21 +64,28 @@ unsigned int Skybox::loadCubemap(std::vector<std::string> faces) {
   stbi_set_flip_vertically_on_load(false);
 
   for (unsigned int i = 0; i < faces.size(); i++) {
-    unsigned char *data =
-        stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 4);
+    
     if (!data) {
-      std::cout << "FAILED TO LOAD: " << faces[i] << std::endl;
-      continue;
+        std::cerr << "CRITICAL: FAILED TO LOAD: " << faces[i] << " - " << stbi_failure_reason() << std::endl;
+        continue;
     }
 
-    GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+    std::cout << "Loading " << faces[i] << ": " << width << "x" << height << std::endl;
 
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height,
-                 0, format, GL_UNSIGNED_BYTE, data);
+    // Use glTexImage2D, but CHECK for errors immediately
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    
+    // Check for errors immediately after the binding
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "GL error after glTexImage2D for face " << i << ": " << err << std::endl;
+    }
 
     stbi_image_free(data);
-  }
+}
 
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -95,6 +102,9 @@ void Skybox::draw(glm::mat4 view, glm::mat4 projection, bool isNight) {
 
   glUseProgram(shaderProgram);
 
+  GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+
   glBindVertexArray(skyboxVAO);
 
   glm::mat4 viewNoTranslation = glm::mat4(glm::mat3(view));
@@ -106,7 +116,6 @@ void Skybox::draw(glm::mat4 view, glm::mat4 projection, bool isNight) {
                      GL_FALSE, &projection[0][0]);
 
   glUniform1i(glGetUniformLocation(shaderProgram, "skybox"), 0);
-
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP,
                 isNight ? nightCubemapTexture : dayCubemapTexture);

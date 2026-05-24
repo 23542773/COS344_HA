@@ -11,10 +11,11 @@
 #include <glm/glm.hpp>
 
 #include "Camera.h"
-#include "Skybox.h"
-#include "shader.hpp"
-#include "Terrain.h"
 #include "Mesh.h"
+#include "ShapeFactory.h"
+#include "Skybox.h"
+#include "Terrain.h"
+#include "shader.hpp"
 #include "utils/ObjectLoader.h"
 
 using namespace glm;
@@ -101,7 +102,7 @@ inline GLFWwindow *setUp() {
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
-  //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  // glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -126,6 +127,27 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
+}
+glm::vec3 turf(0.1f, 0.75f, 0.2f);
+glm::vec3 border(0.22f, 0.11f, 0.04f);
+glm::vec3 concrete(0.4f, 0.4f, 0.4f);
+glm::vec3 water(0.1f, 0.4f, 0.8f);
+glm::vec3 black(0.02f, 0.02f, 0.02f);
+
+void addBorder(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale,
+               glm::vec3 rot) {
+
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, border));
+}
+
+void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
+
+  scene.push_back(ShapeFactory::createCylinder(pos,
+                                               0.22f,              // radius
+                                               0.12f,              // height
+                                               32,                 // segments
+                                               glm::vec3(0, 0, 0), // rotation
+                                               black));
 }
 
 //-----------------------------------
@@ -204,6 +226,124 @@ int main() {
     std::cout << "Failed to load windmill.obj" << std::endl;
   }
 
+  GLuint objectShader = LoadShaders("object.vert", "object.frag");
+
+  // any scene code goes here, just push objects onto the sceneObjects vector
+
+  std::vector<SceneObject> sceneObjects;
+  // hole 1
+  glm::vec3 turf(0.1f, 0.7f, 0.2f);
+  glm::vec3 border(0.18f, 0.09f, 0.03f);
+  glm::vec3 holeColor(0.01f, 0.01f, 0.01f);
+
+  glm::vec3 inclineRot(0.0f, 90.0f, 8.0f);
+
+  // Top start platform
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.0f, 1.4f, 16.5f), glm::vec3(6.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f), turf));
+
+  // Top platform borders (NO back edge - connects to incline)
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.7f, 15.0f),
+            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.7f, 16.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.7f, 16.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+  // incline plane
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 1.0f, 20.8f),
+                                                  glm::vec3(6.0f, 0.3f, 4.0f),
+                                                  inclineRot, turf));
+
+  // Bottom flat platform
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 0.7f, 24.5f),
+                                                  glm::vec3(6.0f, 0.3f, 3.0f),
+                                                  glm::vec3(0.0f), turf));
+
+  // Bottom platform borders (NO top edge - connects to incline)
+  addBorder(sceneObjects, glm::vec3(33.0f, 1.0f, 26.0f),
+            glm::vec3(6.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  addBorder(sceneObjects, glm::vec3(30.0f, 1.0f, 24.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
+
+  addBorder(sceneObjects, glm::vec3(36.0f, 1.0f, 24.5f),
+            glm::vec3(0.4f, 0.7f, 3.0f), glm::vec3(0.0f));
+
+  addHoleCup(sceneObjects, glm::vec3(33.0f, 0.9f, 24.5f));
+  // hole 2
+
+  // Left (vertical bar of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-36.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
+
+  // Bottom (middle of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-30.0f, 0.2f, 24.5f), glm::vec3(15.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f), turf));
+
+  // Right (vertical bar of U)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-24.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
+
+  // borders
+  // left outside
+  addBorder(sceneObjects, glm::vec3(-37.5f, 0.5f, 20.0f),
+            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+
+  // right outside
+  addBorder(sceneObjects, glm::vec3(-22.5f, 0.5f, 20.0f),
+            glm::vec3(0.4f, 0.7f, 12.0f), glm::vec3(0.0f));
+
+  // top left
+  addBorder(sceneObjects, glm::vec3(-36.0f, 0.5f, 14.0f),
+            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // top right
+  addBorder(sceneObjects, glm::vec3(-24.0f, 0.5f, 14.0f),
+            glm::vec3(3.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // Bottom outer (closed U bottom)
+  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 26.0f),
+            glm::vec3(15.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // Inner borders
+
+  // Left inner vert
+  addBorder(sceneObjects, glm::vec3(-34.5f, 0.5f, 18.5f),
+            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+
+  // Right inner vert
+  addBorder(sceneObjects, glm::vec3(-25.5f, 0.5f, 18.5f),
+            glm::vec3(0.4f, 0.7f, 9.0f), glm::vec3(0.0f));
+
+  // Bottom inner
+  addBorder(sceneObjects, glm::vec3(-30.0f, 0.5f, 23.0f),
+            glm::vec3(10.0f, 0.7f, 0.4f), glm::vec3(0.0f));
+
+  // hole placement
+  addHoleCup(sceneObjects, glm::vec3(-24.0f, 0.3f, 16.0f));
+  // hole 3
+  // hole 4
+  // hole 5
+  // hole 6
+  // hole 7
+  // hole 8
+  // hole 9
+  // hole 10
+  // hole 11
+  // hole 12
+  // hole 13
+  // hole 14
+  // hole 15
+  // hole 16
+  // hole 17
+  // hole 18
   while (!glfwWindowShouldClose(window)) {
 
     float currentFrame = glfwGetTime();
@@ -249,6 +389,12 @@ int main() {
     glm::mat4 view = camera->getViewMatrix();
     glm::mat4 projection = camera->getProjectionMatrix(1280.0f / 720.0f);
 
+    glUseProgram(objectShader);
+
+    for (SceneObject &object : sceneObjects) {
+
+      ShapeFactory::drawObject(object, objectShader, view, projection);
+    }
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);

@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "Camera.h"
+#include "LightingSystem.h"
 #include "Mesh.h"
 #include "ShapeFactory.h"
 #include "Skybox.h"
@@ -21,47 +22,43 @@
 using namespace glm;
 using namespace std;
 
+// Global pointers
 Camera *camera;
 Terrain *terrain;
 Mesh *windmill;
+Skybox *skybox;
+LightingSystem *lighting;
 
 float lastX = 640.0f;
 float lastY = 360.0f;
 bool firstMouse = true;
 
-bool isNight = false;
-Skybox *skybox;
-
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window, float deltaTime, bool &spotlightOn, bool &nightVisionOn, bool &orbitMode, bool &orbitTargetSet);
+void setupSceneObjects(std::vector<SceneObject> &sceneObjects);
 
 const char *getError() {
   const char *errorDescription;
   glfwGetError(&errorDescription);
-
   if (errorDescription == nullptr)
     return "Unknown GLFW error";
-
   return errorDescription;
 }
 
 inline void startUpGLFW() {
   glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-
-  glewExperimental = true; // Needed for core profile
+  glewExperimental = true;
   if (!glfwInit()) {
     throw getError();
   }
 }
 
 inline void startUpGLEW() {
-  glewExperimental = true; // Needed in core profile
-
+  glewExperimental = true;
   GLenum err = glewInit();
-
   glGetError();
-
   if (err != GLEW_OK) {
     glfwTerminate();
     throw (const char *)glewGetErrorString(err);
@@ -74,25 +71,18 @@ inline GLFWwindow *setUp() {
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow *window;
-
-  window = glfwCreateWindow(1280, 720, "Team's Golf Course", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(1280, 720, "Team's Golf Course", NULL, NULL);
 
   if (window == NULL) {
     cout << getError() << endl;
-
     glfwTerminate();
-
-    throw "Failed to open GLFW window. If you have an Intel GPU, they are not "
-          "3.3 compatible. Try the 2.1 version of the tutorials.\n";
+    throw "Failed to open GLFW window.\n";
   }
 
   glfwMakeContextCurrent(window);
-
   startUpGLEW();
 
   glfwSetCursorPosCallback(window, mouse_callback);
@@ -101,9 +91,6 @@ inline GLFWwindow *setUp() {
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
-
-  // glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
   return window;
@@ -128,82 +115,157 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
 }
-glm::vec3 turf(0.1f, 0.75f, 0.2f);
-glm::vec3 border(0.22f, 0.11f, 0.04f);
-glm::vec3 concrete(0.4f, 0.4f, 0.4f);
-glm::vec3 water(0.1f, 0.4f, 0.8f);
-glm::vec3 black(0.02f, 0.02f, 0.02f);
 
-// ─── BORDER HELPERS ──────────────────────────────────────────────────────────
+void processInput(GLFWwindow *window, float deltaTime, bool &spotlightOn, 
+                  bool &nightVisionOn, bool &orbitMode, bool &orbitTargetSet) {
+  // Camera movement
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    camera->processKeyboard(FORWARD, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    camera->processKeyboard(BACKWARD, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    camera->processKeyboard(LEFT, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    camera->processKeyboard(RIGHT, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    camera->processKeyboard(UP, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    camera->processKeyboard(DOWN, deltaTime);
 
-void addBorder(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
-    scene.push_back(ShapeFactory::createCube(pos, scale, rot, border));
+  // Speed control
+  if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
+    camera->MovementSpeed += 0.1f;
+  if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
+    camera->MovementSpeed -= 0.1f;
+  if (camera->MovementSpeed < 1.0f) camera->MovementSpeed = 1.0f;
+  if (camera->MovementSpeed > 20.0f) camera->MovementSpeed = 20.0f;
+
+  // FOV control
+  if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+    camera->Zoom += 0.5f;
+  if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+    camera->Zoom -= 0.5f;
+  if (camera->Zoom < 20.0f) camera->Zoom = 20.0f;
+  if (camera->Zoom > 90.0f) camera->Zoom = 90.0f;
+
+  // Rotation
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    camera->processMouseMovement(-1.0f, 0.0f);
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    camera->processMouseMovement(1.0f, 0.0f);
+
+  // Toggle spotlight with 'H' key
+  static bool hPressed = false;
+  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && !hPressed) {
+    spotlightOn = !spotlightOn;
+    hPressed = true;
+  }
+  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_RELEASE) {
+    hPressed = false;
+  }
+
+  // Toggle night vision with 'N' key
+  static bool nPressed = false;
+  if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && !nPressed) {
+    nightVisionOn = !nightVisionOn;
+    nPressed = true;
+    cout << "Night Vision: " << (nightVisionOn ? "ON" : "OFF") << endl;
+  }
+  if (glfwGetKey(window, GLFW_KEY_N) == GLFW_RELEASE) {
+    nPressed = false;
+  }
+
+  // Toggle orbit mode with Middle Mouse Button
+  static bool mPressed = false;
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS && !mPressed) {
+    orbitMode = !orbitMode;
+    camera->setOrbitMode(orbitMode);
+    mPressed = true;
+    cout << "Orbit Mode: " << (orbitMode ? "ON" : "OFF") << endl;
+  }
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_RELEASE) {
+    mPressed = false;
+  }
+
+  // When entering orbit mode, set orbit target to course center
+  if (orbitMode && !orbitTargetSet) {
+    camera->setOrbitTarget(glm::vec3(0.0f, 5.0f, 0.0f));
+    orbitTargetSet = true;
+  }
+  if (!orbitMode) {
+    orbitTargetSet = false;
+  }
 }
 
-// Full bordered path — left + right long sides + front + back caps
-void addHolePath(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
-    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
-    float hw = scale.x * 0.5f + 0.2f;
-    float hd = scale.z * 0.5f + 0.2f;
-    // Long sides (along Z)
-    addBorder(scene, pos + glm::vec3(-hw,  0.3f, 0),   glm::vec3(0.4f, 0.6f, scale.z + 0.4f), rot);
-    addBorder(scene, pos + glm::vec3( hw,  0.3f, 0),   glm::vec3(0.4f, 0.6f, scale.z + 0.4f), rot);
-    // End caps (along X)
-    addBorder(scene, pos + glm::vec3(0, 0.3f, -hd),   glm::vec3(scale.x + 0.8f, 0.6f, 0.4f), rot);
-    addBorder(scene, pos + glm::vec3(0, 0.3f,  hd),   glm::vec3(scale.x + 0.8f, 0.6f, 0.4f), rot);
-}
+void setupSceneObjects(std::vector<SceneObject> &sceneObjects) {
+  glm::vec3 turf(0.1f, 0.7f, 0.2f);
+  glm::vec3 border(0.18f, 0.09f, 0.03f);
+  glm::vec3 black(0.02f, 0.02f, 0.02f);
+  glm::vec3 inclineRot(0.0f, 90.0f, 8.0f);
 
-// Path with only LEFT+RIGHT borders — use for vertical arms that connect top+bottom
-void addHolePathV(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
-    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
-    float hw = scale.x * 0.5f + 0.2f;
-    addBorder(scene, pos + glm::vec3(-hw, 0.3f, 0), glm::vec3(0.4f, 0.6f, scale.z), rot);
-    addBorder(scene, pos + glm::vec3( hw, 0.3f, 0), glm::vec3(0.4f, 0.6f, scale.z), rot);
-}
+  // Hole 1
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(33.0f, 1.4f, 16.5f), glm::vec3(6.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f), turf));
 
-// Path with only FRONT+BACK borders — use for horizontal connectors
-void addHolePathH(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
-    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
-    float hd = scale.z * 0.5f + 0.2f;
-    addBorder(scene, pos + glm::vec3(0, 0.3f, -hd), glm::vec3(scale.x, 0.6f, 0.4f), rot);
-    addBorder(scene, pos + glm::vec3(0, 0.3f,  hd), glm::vec3(scale.x, 0.6f, 0.4f), rot);
-}
+  // Top platform borders
+  auto addBorder = [&](glm::vec3 pos, glm::vec3 scale) {
+    sceneObjects.push_back(ShapeFactory::createCube(pos, scale, glm::vec3(0.0f), border));
+  };
 
-// Bare surface — no borders, used inside junctions
-void addHolePathBare(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot) {
-    scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
-}
+  addBorder(glm::vec3(33.0f, 1.7f, 15.0f), glm::vec3(6.0f, 0.7f, 0.4f));
+  addBorder(glm::vec3(30.0f, 1.7f, 16.5f), glm::vec3(0.4f, 0.7f, 3.0f));
+  addBorder(glm::vec3(36.0f, 1.7f, 16.5f), glm::vec3(0.4f, 0.7f, 3.0f));
 
-void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
-    scene.push_back(ShapeFactory::createCylinder(pos, 0.22f, 0.12f, 32, glm::vec3(0), black));
-}
+  // Incline plane
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 1.0f, 20.8f),
+                                                  glm::vec3(6.0f, 0.3f, 4.0f),
+                                                  inclineRot, turf));
 
-// Over-cover: roof slab + 4 corner pillars
-void addOverCover(std::vector<SceneObject> &scene, glm::vec3 center, float wx, float wz) {
-    float hw = wx * 0.5f, hd = wz * 0.5f;
-    // Roof slab
-    scene.push_back(ShapeFactory::createCube(center + glm::vec3(0, 2.6f, 0), glm::vec3(wx + 0.3f, 0.3f, wz + 0.3f), glm::vec3(0), concrete));
-    // 4 pillars
-    glm::vec3 ps[4] = {
-        {center.x - hw, center.y, center.z - hd},
-        {center.x + hw, center.y, center.z - hd},
-        {center.x - hw, center.y, center.z + hd},
-        {center.x + hw, center.y, center.z + hd}
-    };
-    for (auto &p : ps)
-        scene.push_back(ShapeFactory::createCube(p + glm::vec3(0, 1.3f, 0), glm::vec3(0.4f, 2.6f, 0.4f), glm::vec3(0), concrete));
-}
+  // Bottom flat platform
+  sceneObjects.push_back(ShapeFactory::createCube(glm::vec3(33.0f, 0.7f, 24.5f),
+                                                  glm::vec3(6.0f, 0.3f, 3.0f),
+                                                  glm::vec3(0.0f), turf));
 
-// Tunnel section: roof + two side walls (open ends)
-void addTunnel(std::vector<SceneObject> &scene, glm::vec3 center, float wx, float wz) {
-    scene.push_back(ShapeFactory::createCube(center + glm::vec3(0, 1.9f, 0), glm::vec3(wx + 0.4f, 0.3f, wz), glm::vec3(0), concrete));
-    scene.push_back(ShapeFactory::createCube(center + glm::vec3(-(wx*0.5f+0.2f), 1.0f, 0), glm::vec3(0.4f, 1.8f, wz), glm::vec3(0), concrete));
-    scene.push_back(ShapeFactory::createCube(center + glm::vec3( (wx*0.5f+0.2f), 1.0f, 0), glm::vec3(0.4f, 1.8f, wz), glm::vec3(0), concrete));
+  // Bottom platform borders
+  addBorder(glm::vec3(33.0f, 1.0f, 26.0f), glm::vec3(6.0f, 0.7f, 0.4f));
+  addBorder(glm::vec3(30.0f, 1.0f, 24.5f), glm::vec3(0.4f, 0.7f, 3.0f));
+  addBorder(glm::vec3(36.0f, 1.0f, 24.5f), glm::vec3(0.4f, 0.7f, 3.0f));
+
+  // Hole cup
+  sceneObjects.push_back(ShapeFactory::createCylinder(glm::vec3(33.0f, 0.9f, 24.5f),
+                                                      0.22f, 0.12f, 32,
+                                                      glm::vec3(0, 0, 0), black));
+
+  // Hole 2 - U-shape
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-36.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-30.0f, 0.2f, 24.5f), glm::vec3(15.0f, 0.3f, 3.0f),
+      glm::vec3(0.0f), turf));
+  sceneObjects.push_back(ShapeFactory::createCube(
+      glm::vec3(-24.0f, 0.2f, 20.0f), glm::vec3(3.0f, 0.3f, 12.0f),
+      glm::vec3(0.0f), turf));
+
+  // Hole 2 borders
+  addBorder(glm::vec3(-37.5f, 0.5f, 20.0f), glm::vec3(0.4f, 0.7f, 12.0f));
+  addBorder(glm::vec3(-22.5f, 0.5f, 20.0f), glm::vec3(0.4f, 0.7f, 12.0f));
+  addBorder(glm::vec3(-36.0f, 0.5f, 14.0f), glm::vec3(3.0f, 0.7f, 0.4f));
+  addBorder(glm::vec3(-24.0f, 0.5f, 14.0f), glm::vec3(3.0f, 0.7f, 0.4f));
+  addBorder(glm::vec3(-30.0f, 0.5f, 26.0f), glm::vec3(15.0f, 0.7f, 0.4f));
+  addBorder(glm::vec3(-34.5f, 0.5f, 18.5f), glm::vec3(0.4f, 0.7f, 9.0f));
+  addBorder(glm::vec3(-25.5f, 0.5f, 18.5f), glm::vec3(0.4f, 0.7f, 9.0f));
+  addBorder(glm::vec3(-30.0f, 0.5f, 23.0f), glm::vec3(10.0f, 0.7f, 0.4f));
+
+  // Hole 2 cup
+  sceneObjects.push_back(ShapeFactory::createCylinder(glm::vec3(-24.0f, 0.3f, 16.0f),
+                                                      0.22f, 0.12f, 32,
+                                                      glm::vec3(0, 0, 0), black));
 }
 
 int main() {
   GLFWwindow *window;
-
   try {
     window = setUp();
   } catch (const char *e) {
@@ -211,11 +273,14 @@ int main() {
     return -1;
   }
 
-  camera = new Camera(glm::vec3(40.0f, 20.0f, 40.0f), -90.0f, -45.0f);
+  // Initialize systems
+  camera = new Camera(glm::vec3(0.0f, 2.0f, 5.0f), -90.0f, 0.0f);
+  lighting = new LightingSystem();
 
   float deltaTime = 0.0f;
   float lastFrame = 0.0f;
 
+  // Load skybox
   std::vector<std::string> dayFaces = {
       "assets/skybox/day_right.png", "assets/skybox/day_left.png",
       "assets/skybox/day_top.png",   "assets/skybox/day_bottom.png",
@@ -229,6 +294,7 @@ int main() {
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
 
+  // Load windmill model
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
@@ -237,10 +303,12 @@ int main() {
     std::cout << "Failed to load windmill.obj" << std::endl;
   }
 
+  // Setup shader and lighting
   GLuint objectShader = LoadShaders("object.vert", "object.frag");
+  glUseProgram(objectShader);
+  lighting->setupLights(objectShader);
 
-  // any scene code goes here, just push objects onto the sceneObjects vector
-
+  // Setup scene objects
   std::vector<SceneObject> sceneObjects;
 
   // ═══════════════════════════════════════════════════════════════
@@ -439,7 +507,6 @@ int main() {
 
 
   while (!glfwWindowShouldClose(window)) {
-
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -447,54 +514,42 @@ int main() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-      camera->processKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-      camera->processKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-      camera->processKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-      camera->processKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-      camera->processKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-      camera->processKeyboard(DOWN, deltaTime);
-
-    if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
-      camera->MovementSpeed += 0.1f;
-
-    if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
-      camera->MovementSpeed -= 0.1f;
-
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-      camera->Zoom += 0.5f;
-
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-      camera->Zoom -= 0.5f;
-
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-      camera->processMouseMovement(-1.0f, 0.0f);
-
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-      camera->processMouseMovement(1.0f, 0.0f);
+    // Process input
+    processInput(window, deltaTime, spotlightOn, nightVisionOn, orbitMode, orbitTargetSet);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Update lighting
+    glUseProgram(objectShader);
+    lighting->updateLights(objectShader, camera->Position, camera->getFront(),
+                           deltaTime, spotlightOn, nightVisionOn);
+
+    // Get view and projection matrices
     glm::mat4 view = camera->getViewMatrix();
     glm::mat4 projection = camera->getProjectionMatrix(1280.0f / 720.0f);
 
-    glUseProgram(objectShader);
-
+    // Draw scene objects
     for (SceneObject &object : sceneObjects) {
-
       ShapeFactory::drawObject(object, objectShader, view, projection);
     }
-    glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
 
     terrain->draw(view, projection);
 
+    // Draw windmill
+    if (windmill != nullptr) {
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+      glUniformMatrix4fv(glGetUniformLocation(objectShader, "model"), 1, GL_FALSE, &model[0][0]);
+      windmill->draw();
+    }
+
+    // Draw skybox
+    glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
+    skybox->draw(skyboxView, projection, lighting->isNightTime());
+
+    // Check OpenGL errors
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;
@@ -508,6 +563,13 @@ int main() {
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+
+  // Cleanup
+  delete camera;
+  delete lighting;
+  delete skybox;
+  delete terrain;
+  delete windmill;
 
   glfwTerminate();
   return 0;

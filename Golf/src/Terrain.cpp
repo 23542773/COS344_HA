@@ -6,6 +6,12 @@ Terrain::Terrain(int width, int depth) {
     setupTerrain(width, depth);
 }
 
+Terrain::~Terrain() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
 void Terrain::setupTerrain(int width, int depth) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -16,12 +22,12 @@ void Terrain::setupTerrain(int width, int depth) {
             Vertex v;
             v.position = glm::vec3((float)x, 0.0f, (float)z);
             v.texCoords = glm::vec2((float)x / width, (float)z / depth);
-            v.normal = glm::vec3(0.0f, 1.0f, 0.0f); // Default flat normal
+            v.normal = glm::vec3(0.0f, 1.0f, 0.0f);
             vertices.push_back(v);
         }
     }
 
-    // 2. Create Grid Indices (Connecting the dots)
+    // 2. Create Grid Indices
     for (int z = 0; z < depth; ++z) {
         for (int x = 0; x < width; ++x) {
             int row1 = z * (width + 1);
@@ -40,7 +46,7 @@ void Terrain::setupTerrain(int width, int depth) {
     }
     indexCount = indices.size();
 
-    // 3. Upload to GPU (Standard VBO/EBO/VAO setup)
+    // 3. Upload to GPU
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -58,6 +64,8 @@ void Terrain::setupTerrain(int width, int depth) {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
     glBindVertexArray(0);
 }
 

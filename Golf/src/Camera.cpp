@@ -5,7 +5,7 @@
 Camera::Camera(glm::vec3 position, float yaw, float pitch)
     : Front(0.0f, 0.0f, -1.0f),
       MovementSpeed(5.0f),
-      MouseSensitivity(0.1f),
+      MouseSensitivity(0.01f),
       Zoom(60.0f),
       aspectRatio(16.0f / 9.0f),
       orbitMode(false),
@@ -104,4 +104,8 @@ void Camera::updateCameraVectors() {
     Front = glm::normalize(front);
     Right = glm::normalize(glm::cross(Front, WorldUp));
     Up = glm::normalize(glm::cross(Right, Front));
+}
+
+void Camera::setOrbitTarget(glm::vec3 target) {
+    orbitTarget = target;
 }

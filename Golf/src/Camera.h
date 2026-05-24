@@ -30,12 +30,18 @@ public:
     // orbit
     void setOrbitMode(bool enabled);
     bool isOrbiting() const;
+    void setOrbitTarget(glm::vec3 target);
 
     glm::vec3 Position;
 
     float MovementSpeed;
     float MouseSensitivity;
     float Zoom; // FOV
+
+    // ADD THESE GETTERS
+    glm::vec3 getFront() const { return Front; }
+    glm::vec3 getUp() const { return Up; }
+    glm::vec3 getRight() const { return Right; }
 
 private:
     void updateCameraVectors();

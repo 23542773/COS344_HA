@@ -291,6 +291,9 @@ void ShapeFactory::drawObject(SceneObject &object, GLuint shader,
 
   glUniform1i(glGetUniformLocation(shader, "useTexture"), object.textured);
 
+  glUniform3f(glGetUniformLocation(shader, "objectColor"), 
+                object.color.r, object.color.g, object.color.b);
+
   if (object.textured) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, object.textureID);

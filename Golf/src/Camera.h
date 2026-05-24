@@ -5,55 +5,54 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum Camera_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN
-};
+enum Camera_Movement { FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN };
 
 class Camera {
 public:
-    Camera(glm::vec3 position, float yaw, float pitch);
+  Camera(glm::vec3 position, float yaw, float pitch);
 
-    glm::mat4 getViewMatrix();
-    glm::mat4 getProjectionMatrix(float aspectRatio);
+  glm::mat4 getViewMatrix();
+  glm::mat4 getProjectionMatrix(float aspectRatio);
+  glm::mat4 getTopDownViewMatrix(float height);
+  glm::mat4 getOrthographicProjection(float width, float height);
 
-    void processKeyboard(Camera_Movement direction, float deltaTime);
-    void processMouseMovement(float xoffset, float yoffset);
-    void processMouseScroll(float yoffset);
+  void processKeyboard(Camera_Movement direction, float deltaTime);
+  void processMouseMovement(float xoffset, float yoffset);
+  void processMouseScroll(float yoffset);
+  void processRoll(float offset);
 
-    void setAspectRatio(float aspect);
+  float getYaw();
 
-    // orbit
-    void setOrbitMode(bool enabled);
-    bool isOrbiting() const;
+  void setAspectRatio(float aspect);
 
-    glm::vec3 Position;
+  // orbit
+  void setOrbitMode(bool enabled);
+  bool isOrbiting() const;
 
-    float MovementSpeed;
-    float MouseSensitivity;
-    float Zoom; // FOV
+  glm::vec3 Position;
+
+  float MovementSpeed;
+  float MouseSensitivity;
+  float Zoom; // FOV
 
 private:
-    void updateCameraVectors();
-    void updateOrbitPosition();
+  void updateCameraVectors();
+  void updateOrbitPosition();
 
-    float Yaw;
-    float Pitch;
+  float Yaw;
+  float Pitch;
+  float Roll;
 
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::vec3 Right;
-    glm::vec3 WorldUp;
+  glm::vec3 Front;
+  glm::vec3 Up;
+  glm::vec3 Right;
+  glm::vec3 WorldUp;
 
-    float aspectRatio;
+  float aspectRatio;
 
-    bool orbitMode;
-    glm::vec3 orbitTarget;
-    float orbitDistance;
+  bool orbitMode;
+  glm::vec3 orbitTarget;
+  float orbitDistance;
 };
 
 #endif

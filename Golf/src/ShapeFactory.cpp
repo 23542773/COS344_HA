@@ -7,6 +7,19 @@
 #include "stb_image.h"
 
 namespace {
+static void assignAABB(SceneObject &obj) {
+  obj.collider.type = ColliderType::AABB;
+  obj.collider.center = obj.position;
+  obj.collider.halfSize = obj.scale * 0.5f;
+  obj.collider.radius = 0.0f;
+}
+
+static void assignSphere(SceneObject &obj, float radius) {
+  obj.collider.type = ColliderType::SPHERE;
+  obj.collider.center = obj.position;
+  obj.collider.radius = radius;
+  obj.collider.halfSize = glm::vec3(0.0f);
+}
 
 void setupObject(SceneObject &object, std::vector<float> &vertices,
                  GLenum drawMode) {
@@ -156,7 +169,7 @@ SceneObject ShapeFactory::createCube(glm::vec3 position, glm::vec3 scale,
 
       0.5f, -0.5f, 0.5f, r, g, b, 1.0f, 0.0f, 0.5f, -0.5f, -0.5f, r, g, b, 1.0f,
       1.0f, -0.5f, -0.5f, -0.5f, r, g, b, 0.0f, 1.0f};
-
+  assignAABB(object);
   setupObject(object, vertices, GL_TRIANGLES);
 
   return object;
@@ -194,7 +207,7 @@ SceneObject ShapeFactory::createPlane(glm::vec3 position, glm::vec2 size,
       0.5f,  0.0f, 0.5f,  r, g, b, 1.0f, 1.0f,
       -0.5f, 0.0f, 0.5f,  r, g, b, 0.0f, 1.0f,
       -0.5f, 0.0f, -0.5f, r, g, b, 0.0f, 0.0f};
-
+  assignAABB(object);
   setupObject(object, vertices, GL_TRIANGLES);
 
   return object;
@@ -256,7 +269,9 @@ SceneObject ShapeFactory::createCylinder(glm::vec3 position, float radius,
                                         x1, height, z1, r, g, b, 0.0f, 1.0f,
                                         x1, 0.0f,   z1, r, g, b, 0.0f, 0.0f});
   }
+  float approxRadius = radius * std::max(object.scale.x, object.scale.z);
 
+  assignSphere(object, approxRadius);
   setupObject(object, vertices, GL_TRIANGLES);
 
   return object;

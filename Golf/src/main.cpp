@@ -369,6 +369,26 @@ void drawDroneMarker(float centerX, float centerY, float size) {
 
   glEnable(GL_DEPTH_TEST);
 }
+
+bool collide(const glm::vec3 &position, float radius, const SceneObject &obj) {
+  if (obj.collider.type == ColliderType::AABB) {
+    glm::vec3 minB = obj.collider.center - obj.collider.halfSize;
+    glm::vec3 maxB = obj.collider.center + obj.collider.halfSize;
+
+    glm::vec3 closest(glm::max(minB.x, glm::min(position.x, maxB.x)),
+                      glm::max(minB.y, glm::min(position.y, maxB.y)),
+                      glm::max(minB.z, glm::min(position.z, maxB.z)));
+
+    return glm::length(position - closest) < radius;
+  }
+
+  if (obj.collider.type == ColliderType::SPHERE) {
+    return glm::length(position - obj.collider.center) <
+           (radius + obj.collider.radius);
+  }
+
+  return false;
+}
 void initScreenQuad() {
   float quad[] = {-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
 
@@ -800,7 +820,14 @@ int main() {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderScene(sceneObjects, objectShader, view, projection);
+    glm::vec3 dronePos = camera->Position;
+    float droneRadius = 0.6f;
 
+    for (const SceneObject &obj : sceneObjects) {
+      if (collide(dronePos, droneRadius, obj)) {
+        camera->Position -= camera->getFront() * 0.1f;
+      }
+    }
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);

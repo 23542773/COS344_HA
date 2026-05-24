@@ -22,6 +22,7 @@ public:
   void processRoll(float offset);
 
   float getYaw();
+  glm::vec3 getFront();
 
   void setAspectRatio(float aspect);
 

@@ -1,6 +1,9 @@
 #include "Mesh.h"
+#include "shader.hpp" 
+#include <glm/gtc/type_ptr.hpp>
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+    shaderProgram = LoadShaders("terrain.vert", "terrain.frag"); // Reuse your green shader for now
     setupMesh(vertices, indices);
 }
 
@@ -35,7 +38,12 @@ void Mesh::setupMesh(const std::vector<Vertex>& vertices, const std::vector<unsi
     glBindVertexArray(0);
 }
 
-void Mesh::draw() {
+void Mesh::draw(glm::mat4 view, glm::mat4 projection, glm::mat4 model) {
+    glUseProgram(shaderProgram);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

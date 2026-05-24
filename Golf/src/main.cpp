@@ -128,6 +128,40 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
 }
 
+//-----------------------------------
+// Helper to create a straight hole segment
+Mesh* createStraightHole(glm::vec3 start, glm::vec3 end, float width) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    // Calculate direction and right vector for the path
+    glm::vec3 dir = glm::normalize(end - start);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 right = glm::normalize(glm::cross(dir, up)) * (width * 0.5f);
+
+    // 1. The Green Putting Surface (y = 0.01f to sit slightly above your base terrain)
+    float surfaceY = 0.  1f;
+    glm::vec3 p0 = start - right + glm::vec3(0, surfaceY, 0); // Bottom left
+    glm::vec3 p1 = start + right + glm::vec3(0, surfaceY, 0); // Bottom right
+    glm::vec3 p2 = end - right + glm::vec3(0, surfaceY, 0);   // Top left
+    glm::vec3 p3 = end + right + glm::vec3(0, surfaceY, 0);   // Top right
+
+    // Add surface vertices (Green)
+    vertices.push_back({p0, glm::vec2(0,0), up}); // 0
+    vertices.push_back({p1, glm::vec2(1,0), up}); // 1
+    vertices.push_back({p2, glm::vec2(0,1), up}); // 2
+    vertices.push_back({p3, glm::vec2(1,1), up}); // 3
+
+    indices.insert(indices.end(), {0, 1, 2, 1, 3, 2});
+
+    // --- You can add the raised brown borders here later ---
+    // For now, let's just get the layout paths down!
+
+    return new Mesh(vertices, indices);
+}
+
+//------------------------------------------------------------------------
+
 int main() {
   GLFWwindow *window;
 
@@ -155,6 +189,12 @@ int main() {
 
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
+
+  // Lay out Hole 3
+    // Assuming (0,0) is bottom-left of your 79x48 grid. Let's place it at roughly X=15, Z=10
+    glm::vec3 hole3_start(15.0f, 0.0f, 10.0f); 
+    glm::vec3 hole3_end(15.0f, 0.0f, 25.0f); // 15 meters long
+    Mesh* hole3Segment1 = createStraightHole(hole3_start, hole3_end, 2.0f); // 2 meter width
 
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
@@ -213,7 +253,13 @@ int main() {
 
     skybox->draw(skyboxView, projection, isNight);
 
-    terrain->draw();
+    terrain->draw(view, projection);
+
+    // Draw Hole 3
+    if (hole3Segment1) {
+        glm::mat4 model = glm::mat4(1.0f);
+        hole3Segment1->draw(view, projection, model);
+    }
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -221,7 +267,8 @@ int main() {
     }
 
     if (windmill != nullptr) {
-     windmill->draw();
+    glm::mat4 model = glm::mat4(1.0f); 
+    windmill->draw(view, projection, model);
     }
 
     glfwSwapBuffers(window);

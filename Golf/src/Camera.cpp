@@ -3,7 +3,7 @@
 #include <cmath>
 
 Camera::Camera(glm::vec3 position, float yaw, float pitch)
-    : Front(0.0f, 0.0f, -1.0f), MovementSpeed(5.0f), MouseSensitivity(0.1f),
+    : Front(0.0f, 0.0f, -1.0f), MovementSpeed(5.0f), MouseSensitivity(0.01f),
       Zoom(60.0f), aspectRatio(16.0f / 9.0f), orbitMode(false),
       orbitTarget(0.0f, 0.0f, 0.0f), orbitDistance(10.0f) {
   Position = position;

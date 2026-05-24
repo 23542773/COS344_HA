@@ -17,6 +17,8 @@
 #include "Terrain.h"
 #include "shader.hpp"
 #include "utils/ObjectLoader.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace glm;
 using namespace std;
@@ -31,6 +33,9 @@ bool firstMouse = true;
 
 bool isNight = false;
 Skybox *skybox;
+GLuint hudVAO, hudVBO;
+GLuint droneVAO, droneVBO;
+GLuint droneShader;
 
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
@@ -100,6 +105,8 @@ inline GLFWwindow *setUp() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDepthFunc(GL_LESS);
 
   // glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -149,7 +156,120 @@ void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
                                                glm::vec3(0, 0, 0), // rotation
                                                black));
 }
+const int WINDOW_WIDTH = 1280;
+const int WINDOW_HEIGHT = 720;
 
+const int HUD_WIDTH = 300;
+const int HUD_HEIGHT = 200;
+
+const int HUD_X = 20;
+const int HUD_Y = 20;
+
+glm::vec4 hudTint(0.3f, 0.3f, 0.3f, 0.25f);
+
+glm::vec4 hudBorderColor(0.8f, 0.8f, 0.8f, 1.0f);
+
+glm::vec4 droneMarkerColor(1.0f, 0.2f, 0.2f, 1.0f);
+
+void initDroneMarker() {
+  float tri[] = {0.0f, 1.0f, -0.6f, -0.6f, 0.6f, -0.6f};
+
+  glGenVertexArrays(1, &droneVAO);
+  glGenBuffers(1, &droneVBO);
+
+  glBindVertexArray(droneVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, droneVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(tri), tri, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  glBindVertexArray(0);
+}
+
+void drawFilledRect(float x, float y, float width, float height,
+                    glm::vec4 color) {
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glDisable(GL_DEPTH_TEST);
+
+  glColor4f(color.r, color.g, color.b, color.a);
+
+  glBegin(GL_QUADS);
+
+  glVertex2f(x, y);
+  glVertex2f(x + width, y);
+  glVertex2f(x + width, y + height);
+  glVertex2f(x, y + height);
+
+  glEnd();
+
+  glEnable(GL_DEPTH_TEST);
+
+  glPopMatrix();
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+
+  glMatrixMode(GL_MODELVIEW);
+}
+
+void drawRectOutline(float x, float y, float width, float height,
+                     float thickness, glm::vec4 color) {
+
+  drawFilledRect(x, y, width, thickness, color);
+
+  drawFilledRect(x, y + height - thickness, width, thickness, color);
+
+  drawFilledRect(x, y, thickness, height, color);
+
+  drawFilledRect(x + width - thickness, y, thickness, height, color);
+}
+
+void drawDroneMarker(float centerX, float centerY, float size) {
+  glUseProgram(droneShader);
+
+  glBindVertexArray(droneVAO);
+
+  glDisable(GL_DEPTH_TEST);
+
+  glUniform2f(glGetUniformLocation(droneShader, "uOffset"),
+              centerX - size * 0.5f, centerY - size * 0.5f);
+
+  glUniform2f(glGetUniformLocation(droneShader, "uScale"), size, size);
+
+  glUniform2f(glGetUniformLocation(droneShader, "uResolution"),
+              (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
+
+  glUniform4f(glGetUniformLocation(droneShader, "uColor"), droneMarkerColor.r,
+              droneMarkerColor.g, droneMarkerColor.b, droneMarkerColor.a);
+
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+
+  glBindVertexArray(0);
+
+  glEnable(GL_DEPTH_TEST);
+}
+
+void renderScene(std::vector<SceneObject> &sceneObjects, GLuint shader,
+                 glm::mat4 view, glm::mat4 projection) {
+
+  glUseProgram(shader);
+
+  for (SceneObject &object : sceneObjects) {
+
+    ShapeFactory::drawObject(object, shader, view, projection);
+  }
+}
 int main() {
   GLFWwindow *window;
 
@@ -187,6 +307,36 @@ int main() {
   }
 
   GLuint objectShader = LoadShaders("object.vert", "object.frag");
+  GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
+  droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
+  initDroneMarker();
+
+  float hudVertices[] = {
+      // positions    // colors
+      -1.0f, 1.0f, 0.3f,  0.3f, 0.3f,  0.25f, -1.0f, -1.0f, 0.3f,
+      0.3f,  0.3f, 0.25f, 1.0f, -1.0f, 0.3f,  0.3f,  0.3f,  0.25f,
+
+      -1.0f, 1.0f, 0.3f,  0.3f, 0.3f,  0.25f, 1.0f,  -1.0f, 0.3f,
+      0.3f,  0.3f, 0.25f, 1.0f, 1.0f,  0.3f,  0.3f,  0.3f,  0.25f,
+  };
+
+  glGenVertexArrays(1, &hudVAO);
+  glGenBuffers(1, &hudVBO);
+
+  glBindVertexArray(hudVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, hudVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(hudVertices), hudVertices,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                        (void *)(2 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
 
   // any scene code goes here, just push objects onto the sceneObjects vector
 
@@ -346,21 +496,61 @@ int main() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Main camera
+
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
     glm::mat4 view = camera->getViewMatrix();
-    glm::mat4 projection = camera->getProjectionMatrix(1280.0f / 720.0f);
 
-    glUseProgram(objectShader);
+    glm::mat4 projection =
+        camera->getProjectionMatrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
 
-    for (SceneObject &object : sceneObjects) {
+    renderScene(sceneObjects, objectShader, view, projection);
 
-      ShapeFactory::drawObject(object, objectShader, view, projection);
-    }
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
-
     terrain->draw();
+    // HUD minimap
 
+    glViewport(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);
+
+    glEnable(GL_SCISSOR_TEST);
+
+    glScissor(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glm::mat4 hudView = camera->getTopDownViewMatrix(50.0f);
+
+    glm::mat4 hudProjection = camera->getOrthographicProjection(30.0f, 20.0f);
+
+    renderScene(sceneObjects, objectShader, hudView, hudProjection);
+
+    glDisable(GL_SCISSOR_TEST);
+
+    // HUD tint
+
+    glViewport(HUD_X, HUD_Y, HUD_WIDTH, HUD_HEIGHT);
+
+    glUseProgram(hudShader);
+
+    glDisable(GL_DEPTH_TEST);
+
+    glBindVertexArray(hudVAO);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+
+    // Restore viewport
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // Drone marker
+
+    drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;

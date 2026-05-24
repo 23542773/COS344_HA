@@ -757,8 +757,10 @@ int main() {
 
   float rollOffset = 0;
   static bool nPressedLast = false;
+  glm::vec3 lastCamPos;
 
   while (!glfwWindowShouldClose(window)) {
+    lastCamPos = camera->Position;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -825,7 +827,7 @@ int main() {
 
     for (const SceneObject &obj : sceneObjects) {
       if (collide(dronePos, droneRadius, obj)) {
-        camera->Position -= camera->getFront() * 0.1f;
+        camera->Position = lastCamPos;
       }
     }
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));

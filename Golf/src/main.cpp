@@ -1014,6 +1014,8 @@ int main() {
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
       camera->processKeyboard(DOWN, deltaTime);
 
+    camera->update(deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
       camera->MovementSpeed += 0.1f;
 
@@ -1145,8 +1147,7 @@ int main() {
     // Restore viewport
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     // drone speed calc
-    float droneSpeed = glm::length(camera->Position - lastCamPos) /
-                       glm::max(deltaTime, 0.0001f);
+    float droneSpeed = glm::length(camera->getVelocity());
 
     // Drone marker
     drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);

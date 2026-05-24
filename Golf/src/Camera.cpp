@@ -12,6 +12,9 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch)
   WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
   updateCameraVectors();
   Roll = 0.0f;
+  MaxSpeed = 18.0f;
+  AccelerationRate = 20.0f;
+  DecelerationRate = 8.0f;
 }
 void Camera::processRoll(float offset) {
   Roll += offset * MouseSensitivity;
@@ -63,29 +66,67 @@ float Camera::getYaw() { return this->Yaw; }
 
 glm::vec3 Camera::getFront() { return this->Front; }
 
+glm::vec3 Camera::getVelocity() { return this->Velocity; }
+
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
-  float velocity = MovementSpeed * deltaTime;
 
   if (orbitMode) {
+    float velocity = MovementSpeed * deltaTime;
+
     if (direction == LEFT)
       orbitDistance += velocity;
+
     if (direction == RIGHT)
       orbitDistance -= velocity;
+
     return;
   }
 
+  glm::vec3 moveDir(0.0f);
+
   if (direction == FORWARD)
-    Position += Front * velocity;
+    moveDir += Front;
+
   if (direction == BACKWARD)
-    Position -= Front * velocity;
+    moveDir -= Front;
+
   if (direction == LEFT)
-    Position -= Right * velocity;
+    moveDir -= Right;
+
   if (direction == RIGHT)
-    Position += Right * velocity;
+    moveDir += Right;
+
   if (direction == UP)
-    Position += WorldUp * velocity;
+    moveDir += WorldUp;
+
   if (direction == DOWN)
-    Position -= WorldUp * velocity;
+    moveDir -= WorldUp;
+
+  Velocity += glm::normalize(moveDir) * AccelerationRate * deltaTime;
+
+  // Clamp speed
+  if (glm::length(Velocity) > MaxSpeed) {
+    Velocity = glm::normalize(Velocity) * MaxSpeed;
+  }
+}
+
+void Camera::update(float deltaTime) {
+
+  Position += Velocity * deltaTime;
+
+  float speed = glm::length(Velocity);
+
+  if (speed > 0.0f) {
+
+    float drop = DecelerationRate * deltaTime;
+
+    speed = glm::max(0.0f, speed - drop);
+
+    if (speed > 0.0f)
+      Velocity = glm::normalize(Velocity) * speed;
+    else
+      Velocity = glm::vec3(0.0f);
+  }
 }
 
 void Camera::processMouseMovement(float xoffset, float yoffset) {

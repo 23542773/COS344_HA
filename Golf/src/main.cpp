@@ -522,6 +522,7 @@ bool collide(const glm::vec3 &position, float radius, const SceneObject &obj) {
 
   return false;
 }
+
 void initScreenQuad() {
   float quad[] = {-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
 
@@ -559,6 +560,7 @@ void renderScene(std::vector<SceneObject> &sceneObjects, Shader &shader,
     ShapeFactory::drawObject(object, shaderID, view, projection);
   }
 }
+
 int main() {
   GLFWwindow *window;
 
@@ -608,12 +610,10 @@ int main() {
   initScreenQuad();
   initRectRenderer();
 
-  g_lightManager.getDroneLight().diffuse =
-      glm::vec3(3.0f, 3.0f, 3.0f); // 3x brighter
-  g_lightManager.getDroneLight().ambient =
-      glm::vec3(0.4f, 0.4f, 0.4f); // Higher ambient
-  g_lightManager.getDroneLight().specular =
-      glm::vec3(2.0f, 2.0f, 2.0f); // Brighter specular
+  // Boost drone light intensity for better visibility
+  g_lightManager.getDroneLight().diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
+  g_lightManager.getDroneLight().ambient = glm::vec3(0.4f, 0.4f, 0.4f);
+  g_lightManager.getDroneLight().specular = glm::vec3(2.0f, 2.0f, 2.0f);
 
   initFramebuffer(fbWidth, fbHeight);
   float hudVertices[] = {
@@ -660,279 +660,141 @@ int main() {
   //   Far right   x=60–67: hole 13
   // ═══════════════════════════════════════════════════════════════
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 16 — top-left, L-shape (vertical arm + dogleg right)
-  // Tee at south, cup at east end
-  // ─────────────────────────────────────────────────────────────
-  addHolePathV(sceneObjects, {5.0f, 0.2f, 4.5f}, {3.5f, 0.3f, 7.0f},
-               {0, 0, 0}); // vertical arm, open top+bot
-  addHolePathBare(sceneObjects, {5.0f, 0.2f, 1.5f}, {3.5f, 0.3f, 1.5f},
-                  {0, 0, 0}); // top junction filler
-  addBorder(sceneObjects, {5.0f, 0.5f, 0.55f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap
-  addHolePathH(sceneObjects, {10.0f, 0.2f, 1.5f}, {7.0f, 0.3f, 3.5f},
-               {0, 0, 0}); // horizontal arm east
-  addBorder(sceneObjects, {6.75f, 0.5f, 1.5f}, {0.4f, 0.6f, 3.5f},
-            {0, 0, 0}); // west side of horiz join
-  addBorder(sceneObjects, {13.55f, 0.5f, 1.5f}, {0.4f, 0.6f, 3.5f},
-            {0, 0, 0}); // east cap
-  addBorder(sceneObjects, {5.0f, 0.5f, 8.25f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap of vertical
-  addHoleCup(sceneObjects, {13.0f, 0.35f, 1.5f});
+  //Hole 1
+  float h1X = 10.0f; float h1Z = 10.0f;
+  // Lower path
+  addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
+  addHoleCup(sceneObjects, {h1X, 0.35f, h1Z}); // <--- Cup now on small square
+  
+  // Ramp
+  sceneObjects.push_back(ShapeFactory::createCube({h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
+  // Elevated Green
+  sceneObjects.push_back(ShapeFactory::createCube({h1X, 0.8f, h1Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0,0,0}, turf));
+  
+  // Walls around elevated green
+  addBorder(sceneObjects, {h1X - 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
+  addBorder(sceneObjects, {h1X + 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
+  addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 2 — left edge, large U-shape
-  // Left arm, bottom bar, right arm — tee at south of left arm, cup at north of
-  // right arm ─────────────────────────────────────────────────────────────
-  // Left arm
-  addHolePathV(sceneObjects, {3.0f, 0.2f, 14.0f}, {3.5f, 0.3f, 14.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {3.0f, 0.5f, 20.8f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap
-  // Bottom bar
-  addHolePathBare(sceneObjects, {9.25f, 0.2f, 20.5f}, {9.0f, 0.3f, 3.5f},
-                  {0, 0, 0});
-  addBorder(sceneObjects, {9.25f, 0.5f, 22.25f}, {9.0f, 0.6f, 0.4f},
-            {0, 0, 0}); // south bar of connector
-  // Right arm
-  addHolePathV(sceneObjects, {15.0f, 0.2f, 15.5f}, {3.5f, 0.3f, 11.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {15.0f, 0.5f, 20.8f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap right arm
-  // North caps
-  addBorder(sceneObjects, {3.0f, 0.5f, 6.9f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap left arm
-  addBorder(sceneObjects, {15.0f, 0.5f, 9.9f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap right arm
-  addHoleCup(sceneObjects, {15.0f, 0.35f, 10.5f});
+  //Hole 2
+  float h2X = 30.0f; float h2Z = 10.0f;
+  // Paths
+  addHolePathBare(sceneObjects, {h2X, 0.2f, h2Z}, {3.0f, 0.3f, 6.0f}, {0,0,0}); // Vertical
+  addHolePathBare(sceneObjects, {h2X + 3.0f, 0.2f, h2Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0}); // Horizontal
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 3 — left-center, wraps around the water feature
-  // A narrow C-shape: top arm → east connector → south arm, water in the middle
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {7.5f, 0.2f, 8.5f}, {3.5f, 0.3f, 3.5f},
-              {0, 0, 0}); // top segment (tee end, full borders)
-  addHolePathBare(sceneObjects, {11.0f, 0.2f, 9.5f}, {3.5f, 0.3f, 5.0f},
-                  {0, 0, 0}); // east bridge (alongside water)
-  addBorder(sceneObjects, {11.0f, 0.5f, 6.9f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap of bridge
-  addBorder(sceneObjects, {11.0f, 0.5f, 12.05f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap of bridge
-  addBorder(sceneObjects, {9.15f, 0.5f, 9.5f}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // west wall of bridge (faces water)
-  addBorder(sceneObjects, {12.85f, 0.5f, 9.5f}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // east wall of bridge
-  // WATER FEATURE (fills the pocket between the arms)
-  sceneObjects.push_back(ShapeFactory::createCube(
-      {9.5f, 0.16f, 10.5f}, {4.5f, 0.12f, 5.5f}, {0, 0, 0}, water));
-  addHoleCup(sceneObjects, {7.5f, 0.35f, 6.8f});
+  // 1. Left Wall (Vertical section only)
+  addBorder(sceneObjects, {h2X - 1.7f, 0.5f, h2Z}, {0.4f, 0.6f, 6.0f}, {0,0,0});
+  
+  // 2. Bottom Wall (Horizontal section only)
+  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z - 0.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 4 — left side, vertical then dogleg right
-  // ─────────────────────────────────────────────────────────────
-  addHolePathV(sceneObjects, {5.0f, 0.2f, 26.5f}, {3.5f, 0.3f, 9.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {5.0f, 0.5f, 22.0f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap
-  addBorder(sceneObjects, {5.0f, 0.5f, 31.0f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap
-  addHolePathBare(sceneObjects, {10.25f, 0.2f, 31.0f}, {6.5f, 0.3f, 3.5f},
-                  {0, 0, 0}); // dogleg east
-  addBorder(sceneObjects, {10.25f, 0.5f, 29.25f}, {6.5f, 0.6f, 0.4f},
-            {0, 0, 0}); // north of dogleg
-  addBorder(sceneObjects, {10.25f, 0.5f, 32.75f}, {6.5f, 0.6f, 0.4f},
-            {0, 0, 0}); // south of dogleg
-  addBorder(sceneObjects, {13.65f, 0.5f, 31.0f}, {0.4f, 0.6f, 3.5f},
-            {0, 0, 0}); // east cap of dogleg
-  addHoleCup(sceneObjects, {13.0f, 0.35f, 31.0f});
+  // 3. Right Wall (Horizontal section end)
+  addBorder(sceneObjects, {h2X + 6.2f, 0.5f, h2Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 5 — left side, straight vertical (tee south, cup north)
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {5.0f, 0.2f, 37.5f}, {3.5f, 0.3f, 10.0f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {5.0f, 0.35f, 33.0f});
+  // 4. Top Wall (Horizontal section top)
+  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
+  
+  addHoleCup(sceneObjects, {h2X + 5.5f, 0.35f, h2Z + 1.5f});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 18 — bottom-left, vertical south then dogleg east
-  // ─────────────────────────────────────────────────────────────
-  addHolePathV(sceneObjects, {5.0f, 0.2f, 44.0f}, {3.5f, 0.3f, 7.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {5.0f, 0.5f, 40.55f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap
-  addBorder(sceneObjects, {5.0f, 0.5f, 47.55f}, {3.5f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap
-  addHolePathBare(sceneObjects, {11.0f, 0.2f, 47.0f}, {8.0f, 0.3f, 3.5f},
-                  {0, 0, 0}); // east dogleg
-  addBorder(sceneObjects, {11.0f, 0.5f, 45.25f}, {8.0f, 0.6f, 0.4f},
-            {0, 0, 0}); // north of dogleg
-  addBorder(sceneObjects, {11.0f, 0.5f, 48.75f}, {8.0f, 0.6f, 0.4f},
-            {0, 0, 0}); // south of dogleg
-  addBorder(sceneObjects, {15.1f, 0.5f, 47.0f}, {0.4f, 0.6f, 3.5f},
-            {0, 0, 0}); // east cap
-  addHoleCup(sceneObjects, {14.5f, 0.35f, 47.0f});
+  //Hole 3
+  float h3X = 30.0f; float h3Z = 25.0f;
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 6 — center-left, wide rectangle
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {12.5f, 0.2f, 29.5f}, {6.0f, 0.3f, 9.0f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {12.5f, 0.35f, 25.5f});
+  // 1. Path Segments (Bare)
+  addHolePathBare(sceneObjects, {h3X, 0.2f, h3Z}, {3.0f, 0.3f, 6.0f}, {0, 20, 0});
+  addHolePathBare(sceneObjects, {h3X + 2.0f, 0.2f, h3Z + 6.0f}, {3.0f, 0.3f, 6.0f}, {0, -20, 0});
+  addHolePathBare(sceneObjects, {h3X + 1.0f, 0.2f, h3Z + 3.0f}, {3.0f, 0.3f, 3.5f}, {0, 0, 0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 17 — center-bottom, wide horizontal block
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {19.5f, 0.2f, 40.0f}, {10.0f, 0.3f, 6.0f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {16.0f, 0.35f, 40.0f});
+  // 2. Borders (Blue lines: trimmed to 4.5f to prevent overhang)
+  // Top-left wall
+  addBorder(sceneObjects, {h3X - 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f}, {0, 20, 0}); 
+  
+  // Right-side walls (Split to stop at the turn)
+  addBorder(sceneObjects, {h3X + 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f}, {0, 20, 0}); 
+  addBorder(sceneObjects, {h3X + 3.7f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -20, 0});
+  
+  // Bottom-right wall
+  addBorder(sceneObjects, {h3X + 0.5f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -20, 0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 14 — top-center-left, long vertical with incline
-  // Tee at south (high), ramps up, cup at north (elevated)
-  // ─────────────────────────────────────────────────────────────
-  // Lower flat section
-  addHolePathV(sceneObjects, {20.5f, 0.2f, 5.5f}, {4.0f, 0.3f, 7.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {20.5f, 0.5f, 2.0f}, {4.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap lower
-  addBorder(sceneObjects, {20.5f, 0.5f, 9.0f}, {4.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap lower / transition
-  // Incline
-  sceneObjects.push_back(ShapeFactory::createCube(
-      {20.5f, 0.65f, 11.5f}, {4.0f, 0.3f, 4.5f}, {8.0f, 0, 0}, turf));
-  addBorder(sceneObjects, {16.4f, 0.95f, 11.5f}, {0.4f, 0.6f, 4.5f},
-            {0, 0, 0}); // left wall incline
-  addBorder(sceneObjects, {24.6f, 0.95f, 11.5f}, {0.4f, 0.6f, 4.5f},
-            {0, 0, 0}); // right wall incline
-  // Upper flat section
-  addHolePathV(sceneObjects, {20.5f, 1.05f, 15.0f}, {4.0f, 0.3f, 3.5f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {20.5f, 1.35f, 13.25f}, {4.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap upper
-  addBorder(sceneObjects, {20.5f, 1.35f, 16.75f}, {4.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap upper
-  addHoleCup(sceneObjects, {20.5f, 1.2f, 14.0f});
+  addHoleCup(sceneObjects, {h3X + 2.0f, 0.35f, h3Z + 7.5f});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 15 — center-left, vertical with over-cover on top half
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {20.5f, 0.2f, 25.5f}, {4.0f, 0.3f, 10.0f},
-              {0, 0, 0});
-  addOverCover(sceneObjects, {20.5f, 0.2f, 22.0f}, 4.0f, 5.5f);
-  addHoleCup(sceneObjects, {20.5f, 0.35f, 30.0f});
+  //hole 4
+  float h4X = 10.0f; float h4Z = 35.0f;
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 10 — center, vertical with over-cover on top half
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {20.5f, 0.2f, 36.5f}, {4.0f, 0.3f, 9.0f},
-              {0, 0, 0});
-  addOverCover(sceneObjects, {20.5f, 0.2f, 33.5f}, 4.0f, 4.5f);
-  addHoleCup(sceneObjects, {20.5f, 0.35f, 40.5f});
+  // 1. ADD BACK THE TURF (Missing in your current view)
+  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 2.0f}, {3.0f, 0.3f, 4.0f}, {0,0,0}); // Main
+  addHolePathBare(sceneObjects, {h4X - 2.5f, 0.2f, h4Z + 6.0f}, {3.0f, 0.3f, 5.0f}, {0, -15, 0}); // Left branch
+  addHolePathBare(sceneObjects, {h4X + 2.5f, 0.2f, h4Z + 6.0f}, {3.0f, 0.3f, 5.0f}, {0, 15, 0}); // Right branch
+  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 9.5f}, {8.0f, 0.3f, 4.0f}, {0,0,0}); // Rejoin
+  addHoleCup(sceneObjects, {h4X, 0.35f, h4Z + 9.5f});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 1 — top-center, elevated tee → incline → putting green
-  // ─────────────────────────────────────────────────────────────
-  // Elevated tee platform
-  sceneObjects.push_back(ShapeFactory::createCube(
-      {30.5f, 1.5f, 2.5f}, {7.0f, 0.35f, 4.0f}, {0, 0, 0}, turf));
-  addBorder(sceneObjects, {30.5f, 1.85f, 0.6f}, {7.8f, 0.7f, 0.4f},
-            {0, 0, 0}); // north wall
-  addBorder(sceneObjects, {30.5f, 1.85f, 4.6f}, {7.8f, 0.7f, 0.4f},
-            {0, 0, 0}); // south wall (open side → incline)
-  addBorder(sceneObjects, {26.9f, 1.85f, 2.5f}, {0.4f, 0.7f, 4.0f},
-            {0, 0, 0}); // west wall
-  addBorder(sceneObjects, {34.1f, 1.85f, 2.5f}, {0.4f, 0.7f, 4.0f},
-            {0, 0, 0}); // east wall
-  // Incline
-  sceneObjects.push_back(ShapeFactory::createCube(
-      {30.5f, 1.05f, 8.5f}, {7.0f, 0.3f, 7.5f}, {8.0f, 0, 0}, turf));
-  addBorder(sceneObjects, {26.9f, 1.2f, 8.5f}, {0.4f, 0.5f, 7.5f},
-            {0, 0, 0}); // left wall of slope
-  addBorder(sceneObjects, {34.1f, 1.2f, 8.5f}, {0.4f, 0.5f, 7.5f},
-            {0, 0, 0}); // right wall of slope
-  // Putting green (lower)
-  sceneObjects.push_back(ShapeFactory::createCube(
-      {30.5f, 0.7f, 14.0f}, {7.0f, 0.3f, 5.0f}, {0, 0, 0}, turf));
-  addBorder(sceneObjects, {30.5f, 1.05f, 16.6f}, {7.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south wall
-  addBorder(sceneObjects, {26.9f, 1.05f, 14.0f}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // west wall
-  addBorder(sceneObjects, {34.1f, 1.05f, 14.0f}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // east wall
-  addHoleCup(sceneObjects, {30.5f, 0.85f, 14.0f});
+  // 2. THE BORDERS (The ones you already have)
+  addBorder(sceneObjects, {h4X - 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f}, {0,0,0});
+  addBorder(sceneObjects, {h4X + 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f}, {0,0,0});
+  addBorder(sceneObjects, {h4X - 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -15, 0});
+  addBorder(sceneObjects, {h4X + 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, 15, 0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 11 — bottom-center, tall vertical rect
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {29.5f, 0.2f, 41.5f}, {5.5f, 0.3f, 11.0f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {29.5f, 0.35f, 36.5f});
+  // hole 5
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 12 — bottom-center-right, wide horizontal
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {38.5f, 0.2f, 44.5f}, {10.0f, 0.3f, 5.5f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {34.5f, 0.35f, 44.5f});
+  float h5X = 45.0f; float h5Z = 10.0f; 
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 7 — top-right-center, large square, FULLY covered
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {38.5f, 0.2f, 8.0f}, {8.0f, 0.3f, 14.0f},
-              {0, 0, 0});
-  addOverCover(sceneObjects, {38.5f, 0.2f, 8.0f}, 8.0f, 14.0f);
-  addHoleCup(sceneObjects, {38.5f, 0.35f, 13.5f});
+  // 1. Single Straight Path
+  addHolePathBare(sceneObjects, {h5X, 0.2f, h5Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h5X, 0.35f, h5Z + 5.0f});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 8 — right of 7, taller rect, FULLY covered
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {47.5f, 0.2f, 16.5f}, {8.0f, 0.3f, 19.0f},
-              {0, 0, 0});
-  addOverCover(sceneObjects, {47.5f, 0.2f, 16.5f}, 8.0f, 19.0f);
-  addHoleCup(sceneObjects, {47.5f, 0.35f, 24.5f});
+  // 2. Clean Straight Borders
+  // Left border
+  addBorder(sceneObjects, {h5X - 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+  // Right border
+  addBorder(sceneObjects, {h5X + 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 9 — right strip, very long vertical, tunnel at south end
-  // ─────────────────────────────────────────────────────────────
-  addHolePathV(sceneObjects, {55.0f, 0.2f, 26.0f}, {5.0f, 0.3f, 34.0f},
-               {0, 0, 0});
-  addBorder(sceneObjects, {55.0f, 0.5f, 9.0f}, {5.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // north cap
-  addBorder(sceneObjects, {55.0f, 0.5f, 43.1f}, {5.0f + 0.8f, 0.6f, 0.4f},
-            {0, 0, 0}); // south cap
-  // Tunnel — bottom third of the path
-  addTunnel(sceneObjects, {55.0f, 0.2f, 38.5f}, 5.0f, 9.0f);
-  addHoleCup(sceneObjects, {55.0f, 0.35f, 11.0f});
+  //hole 6
+  float h6X = 45.0f; float h6Z = 25.0f;
 
-  // ─────────────────────────────────────────────────────────────
-  // HOLE 13 — far right, extremely long straight
-  // ─────────────────────────────────────────────────────────────
-  addHolePath(sceneObjects, {64.0f, 0.2f, 25.0f}, {4.5f, 0.3f, 44.0f},
-              {0, 0, 0});
-  addHoleCup(sceneObjects, {64.0f, 0.35f, 5.0f});
+  // 1. Path (Wide base tapering to narrow)
+  // Wide section
+  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
+  // Narrow section
+  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
+  
+  addHoleCup(sceneObjects, {h6X, 0.35f, h6Z + 10.0f});
+
+  // 2. Borders (Angled to create the funnel effect)
+  // Left side
+  addBorder(sceneObjects, {h6X - 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Wide wall
+  addBorder(sceneObjects, {h6X - 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}); // Narrow wall
+  
+  // Right side
+  addBorder(sceneObjects, {h6X + 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Wide wall
+  addBorder(sceneObjects, {h6X + 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}); // Narrow wall
 
   float rollOffset = 0;
   static bool nPressedLast = false;
   glm::vec3 lastCamPos;
-  static bool gPressedLast = false;
-  bool grayscale = false;
+
+  // Auto day/night cycle variables
+  static float timeOfDay = 0.5f;      // Start at noon (0.5)
+  static float cycleSpeed = 0.0001;  // Full cycle in ~33 minutes at 60fps
+  static float dayNightFactor = 0.0f;
+  static bool autoCycleActive = true;
 
   // F-key press tracking
   static bool f1Pressed = false;
   static bool f2Pressed = false;
   static bool f3Pressed = false;
   static bool f4Pressed = false;
-
+  
   // Debug frame counter
   static int debugFrameCount = 0;
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window))
+  {
     lastCamPos = camera->Position;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     rollOffset = 0;
+    
     bool nPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
 
     if (nPressed && !nPressedLast) {
@@ -941,21 +803,13 @@ int main() {
 
     nPressedLast = nPressed;
 
-    bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
-
-    if (gPressed && !gPressedLast) {
-      grayscale = !grayscale;
-    }
-
-    gPressedLast = gPressed;
-
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
 
     // ─────────────────────────────────────────────────────────────
     // LIGHTING CONTROLS (F1-F4)
     // ─────────────────────────────────────────────────────────────
-
+    
     // F1: Toggle sun
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
       if (!f1Pressed) {
@@ -1035,30 +889,114 @@ int main() {
       rollOffset += 0.5;
 
     camera->processRoll(rollOffset);
-
+    
+    // ─────────────────────────────────────────────────────────────
+    // SMOOTH AUTO DAY/NIGHT CYCLE
+    // F5: Resume auto cycle (if manually overridden)
+    // F2/F3: Manual override to night/day
+    // ─────────────────────────────────────────────────────────────
+    
+    // F5: Resume auto cycle (clear manual override)
+    static bool f5Pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+        if (!f5Pressed) {
+            g_lightManager.resumeAutoCycle();
+            f5Pressed = true;
+        }
+    } else {
+        f5Pressed = false;
+    }
+    
+    // Update time of day (always running, but only applied if not manually overridden)
+    timeOfDay += cycleSpeed * deltaTime * 60.0f;
+    if (timeOfDay >= 1.0f) timeOfDay -= 1.0f;
+    
+    // Map time to day/night factor with smooth transitions
+    float factor;
+    if (timeOfDay < 0.60f) {
+        factor = 0.0f;  // Full day
+    } else if (timeOfDay < 0.65f) {
+        // Sunset transition (0.60 to 0.65) - longer for smoother transition
+        float t = (timeOfDay - 0.60f) / 0.05f;
+        factor = t;
+    } else if (timeOfDay < 0.80f) {
+        factor = 1.0f;  // Full night
+    } else if (timeOfDay < 0.85f) {
+        // Sunrise transition (0.80 to 0.85)
+        float t = (timeOfDay - 0.80f) / 0.05f;
+        factor = 1.0f - t;
+    } else {
+        factor = 0.0f;  // Full day
+    }
+    
+    dayNightFactor = factor;
+    
+    // Apply smooth lighting transition (respects manualOverride internally)
+    g_lightManager.setDayNightFactor(dayNightFactor);
+    
+    // Update skybox with hysteresis to prevent rapid switching
+    static bool lastSkyboxNight = false;
+    static float switchHysteresis = 0.1f;  // 10% buffer zone
+    
+    bool shouldBeNight;
+    if (dayNightFactor > 0.6f) {
+        shouldBeNight = true;
+    } else if (dayNightFactor < 0.4f) {
+        shouldBeNight = false;
+    } else {
+        shouldBeNight = lastSkyboxNight;  // Stay in current state in the middle
+    }
+    
+    if (shouldBeNight != lastSkyboxNight) {
+        isNight = shouldBeNight;
+        lastSkyboxNight = shouldBeNight;
+        std::cout << "Skybox switched to: " << (isNight ? "NIGHT" : "DAY") 
+                  << " (factor: " << dayNightFactor << ")" << std::endl;
+    }
+    
+    // Rotate sun continuously
+    float sunAngle;
+    if (timeOfDay < 0.25f) {
+        sunAngle = 180.0f + (timeOfDay / 0.25f) * 90.0f;
+    } else if (timeOfDay < 0.75f) {
+        sunAngle = (timeOfDay - 0.25f) / 0.5f * 180.0f;
+    } else {
+        sunAngle = 180.0f + (timeOfDay - 0.75f) / 0.25f * 90.0f;
+    }
+    
+    float rad = glm::radians(sunAngle);
+    glm::vec3 sunDir = glm::normalize(glm::vec3(cos(rad), -sin(rad), 0.3f));
+    g_lightManager.setSunDirection(sunDir);
+    
+    // Debug print less frequently
+    static int cycleDebugFrame = 0;
+    if (cycleDebugFrame++ % 600 == 0) {
+        std::cout << "Auto Cycle - Time: " << timeOfDay << " | Factor: " << dayNightFactor 
+                  << " | Sun Angle: " << sunAngle << "°"
+                  << " | Manual Override: " << (g_lightManager.isManualOverride() ? "YES" : "NO")
+                  << std::endl;
+    }
+    
     // ─────────────────────────────────────────────────────────────
     // UPDATE DRONE LIGHT POSITION AND DIRECTION
     // ─────────────────────────────────────────────────────────────
     // Get camera front direction (where the drone/camera is looking)
     glm::vec3 cameraFront = camera->getFront();
     glm::vec3 cameraPos = camera->Position;
-
+    
     // Update drone light position (attached to camera)
     g_lightManager.getDroneLight().position = cameraPos;
-
+    
     // Update drone light direction (pointing where camera looks)
     g_lightManager.getDroneLight().direction = cameraFront;
-
+    
     // Debug print every 300 frames
     if (debugFrameCount++ % 300 == 0) {
-      std::cout << "Drone Light Pos: (" << cameraPos.x << ", " << cameraPos.y
-                << ", " << cameraPos.z << ")" << std::endl;
-      std::cout << "Drone Light Dir: (" << cameraFront.x << ", "
-                << cameraFront.y << ", " << cameraFront.z << ")" << std::endl;
-      std::cout << "Drone Light Enabled: "
-                << g_lightManager.getDroneLight().enabled << std::endl;
+        std::cout << "Drone Light Pos: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << std::endl;
+        std::cout << "Drone Light Dir: (" << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << ")" << std::endl;
+        std::cout << "Drone Light Enabled: " << g_lightManager.getDroneLight().enabled << std::endl;
     }
-
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Main camera
@@ -1070,12 +1008,12 @@ int main() {
         camera->getProjectionMatrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
     // Bind lights before rendering scene
     objectShader.use();
     g_lightManager.bindAllLights(objectShader);
     objectShader.setVec3("viewPos", camera->Position);
-
+    
     renderScene(sceneObjects, objectShader, view, projection);
     glm::vec3 dronePos = camera->Position;
     float droneRadius = 0.6f;
@@ -1088,12 +1026,12 @@ int main() {
     glm::mat4 skyboxView = glm::mat4(glm::mat3(view));
 
     skybox->draw(skyboxView, projection, isNight);
-
+    
     // Bind lights for terrain
     objectShader.use();
     g_lightManager.bindAllLights(objectShader);
     objectShader.setVec3("viewPos", camera->Position);
-
+    
     terrain->draw(view, projection);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1101,7 +1039,6 @@ int main() {
     glUseProgram(screenShader);
 
     glUniform1i(glGetUniformLocation(screenShader, "nightMode"), isNight);
-    glUniform1i(glGetUniformLocation(screenShader, "grayscale"), grayscale);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTexture);

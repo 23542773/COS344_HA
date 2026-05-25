@@ -646,6 +646,34 @@ int main() {
           flag = new Mesh(v, i, objectShader.getProgramID());
   }
 
+  Mesh *bridge = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Bridge.obj", v, i))
+          bridge = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *boulder = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/boulder.obj", v, i))
+          boulder = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *fence = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Wooden_fence.obj", v, i))
+          fence = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *palmtree2 = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/PalmTree.obj", v, i))
+          palmtree2 = new Mesh(v, i, objectShader.getProgramID());
+  }
+
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
@@ -730,12 +758,86 @@ int main() {
           {0, 0, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f},
           {0, 0, 0}, "assets/textures/brick_texture.png");
-  
+
 std::vector<MeshInstance> meshInstances;
-if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
-if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f}, glm::vec3(1.0f), 0.0f});
-if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
-if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+
+  // ── Hole 1 area ──────────────────────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {10.0f, 0.0f, 26.0f},  glm::vec3(1.0f), 180.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {15.0f, 0.0f, 15.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     { 7.0f, 0.0f,  7.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {13.0f, 0.0f,  7.0f},  glm::vec3(1.0f),   0.0f});
+
+  // ── Top-left gap (holes 7 area) ──────────────────────────────
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 3.0f, 0.0f,  5.0f},  glm::vec3(1.0f),  30.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 6.0f, 0.0f,  8.0f},  glm::vec3(1.0f),  75.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    { 4.0f, 0.0f, 12.0f},  glm::vec3(1.0f),   0.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {2.0f, 0.0f, 20.0f},  glm::vec3(1.0f),   0.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {2.0f, 0.0f, 23.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     { 2.0f, 0.0f, 26.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Center-left gap (holes 2,3,16 area) ──────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {22.0f, 0.0f, 18.0f},  glm::vec3(1.0f),  90.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {24.0f, 0.0f, 22.0f},  glm::vec3(1.0f),  45.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{26.0f, 0.0f,  8.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Water hazard 1 surrounds (x≈25, z≈16) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {21.0f, 0.0f, 14.0f},  glm::vec3(1.0f),  20.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {29.0f, 0.0f, 18.0f},  glm::vec3(1.0f), 120.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {28.0f, 0.0f, 13.0f},  glm::vec3(1.0f),  60.0f});
+  // ── Hole 4 area (x≈10, z≈35-45) ─────────────────────────────
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {16.0f, 0.0f, 40.0f},  glm::vec3(1.0f),  90.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 5.0f, 0.0f, 38.0f},  glm::vec3(1.0f),  15.0f});
+  // ── Water hazard 3 surrounds (x≈10, z≈40) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    { 7.0f, 0.0f, 38.0f},  glm::vec3(1.0f),  45.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {14.0f, 0.0f, 42.0f},  glm::vec3(1.0f), 200.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     { 6.0f, 0.0f, 44.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 5 area (x≈45, z≈10-22) ─────────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {49.0f, 0.0f, 13.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {41.0f, 0.0f, 13.0f},  glm::vec3(1.0f),   0.0f});
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {50.0f, 0.0f, 22.0f},  glm::vec3(1.0f), 270.0f});
+  // ── Between holes 5 & 6 ──────────────────────────────────────
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {41.0f, 0.0f, 23.0f},  glm::vec3(1.0f),  90.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {52.0f, 0.0f, 24.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 6 area (x≈45, z≈25-33) ─────────────────────────────
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{50.0f, 0.0f, 28.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{41.0f, 0.0f, 30.0f},  glm::vec3(1.0f), 180.0f});
+  // ── Hole 8 area (x≈38, z≈35-40) ─────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {45.0f, 0.0f, 39.0f},  glm::vec3(1.0f), 180.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {32.0f, 0.0f, 43.0f},  glm::vec3(1.0f),  30.0f});
+  // ── Hole 9 area (x≈55-65, z≈25-32) ──────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {67.0f, 0.0f, 33.0f},  glm::vec3(1.0f),   0.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {52.0f, 0.0f, 35.0f},  glm::vec3(1.0f),  45.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {68.0f, 0.0f, 30.0f},  glm::vec3(1.0f),  90.0f});
+  // ── Hole 11 area (x≈50, z≈35-44) ────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {54.0f, 0.0f, 33.0f},  glm::vec3(1.0f),  90.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {46.0f, 0.0f, 41.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 13 area (x≈70, z≈10-21) ────────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {66.0f, 0.0f, 14.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {74.0f, 0.0f, 14.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{75.0f, 0.0f, 20.0f},  glm::vec3(1.0f),   0.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {65.0f, 0.0f, 18.0f},  glm::vec3(1.0f),  80.0f});
+  // ── Hole 15 area (x≈70, z≈30-42) ────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {75.0f, 0.0f, 36.0f},  glm::vec3(1.0f), 270.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {65.0f, 0.0f, 33.0f},  glm::vec3(1.0f),  10.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {75.0f, 0.0f, 30.0f},  glm::vec3(1.0f),  90.0f});
+  // ── Water hazard 2 surrounds (x≈20, z≈33) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {16.0f, 0.0f, 31.0f},  glm::vec3(1.0f), 160.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {17.0f, 0.0f, 36.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Far bottom edge ───────────────────────────────────────────
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{35.0f, 0.0f, 47.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{55.0f, 0.0f, 47.0f},  glm::vec3(1.0f),  90.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {65.0f, 0.0f, 45.0f},  glm::vec3(1.0f),  20.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {75.0f, 0.0f, 23.0f},  glm::vec3(1.0f),   0.0f});
+
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {10.0f, 0.0f, 10.0f},  glm::vec3(1.0f),   0.0f}); // hole 1
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {10.0f, 0.0f, 46.0f},  glm::vec3(1.0f),   0.0f}); // hole 4
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {45.0f, 0.0f, 22.0f},  glm::vec3(1.0f),   0.0f}); // hole 5 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {45.0f, 0.0f, 35.0f},  glm::vec3(1.0f),   0.0f}); // hole 6 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {35.0f, 0.0f, 33.0f},  glm::vec3(1.0f),   0.0f}); // hole 8
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {63.5f, 0.0f, 31.0f},  glm::vec3(1.0f),   0.0f}); // hole 9 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {53.0f, 0.0f, 44.0f},  glm::vec3(1.0f),   0.0f}); // hole 11 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 10.0f},  glm::vec3(1.0f),   0.0f}); // hole 13 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 35.0f},  glm::vec3(1.0f),   0.0f}); // hole 15 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {60.5f, 0.0f, 37.0f},  glm::vec3(1.0f),   0.0f}); // hole 17 cups
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 45.0f},  glm::vec3(1.0f),   0.0f}); // hole 18 cup
 
          
  // Hole 2

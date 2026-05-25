@@ -2,11 +2,9 @@
 #define LIGHT_MANAGER_H
 
 #include "Light.h"
+#include "../shader.hpp"
 #include <vector>
 #include <iostream>
-
-// Forward declaration
-class Shader;
 
 class LightManager {
 private:
@@ -22,6 +20,14 @@ private:
     glm::vec3 daySunDiffuse;
     glm::vec3 nightSunDiffuse;
     
+    // For smooth transitions
+    float dayNightFactor;
+    glm::vec3 currentSunAmbient;
+    glm::vec3 currentSunDiffuse;
+    
+    // ADD THIS MISSING MEMBER VARIABLE
+    bool manualOverride;  // Track if manually overridden
+    
 public:
     LightManager();
     ~LightManager() = default;
@@ -29,6 +35,15 @@ public:
     void initCourseLights();
     void updateDayNightCycle(float deltaTime, float speed = 0.1f);
     void bindAllLights(Shader& shader) const;
+    
+    // Smooth transition methods
+    void setDayNightFactor(float factor);
+    float getDayNightFactor() const { return dayNightFactor; }
+    void updateSmoothLighting();
+    
+    // ADD THIS MISSING METHOD
+    bool isManualOverride() const { return manualOverride; }
+    void resumeAutoCycle();  // Add this too if not present
     
     // Getters
     DirectionalLight& getSun() { return sun; }
@@ -46,10 +61,11 @@ public:
     void toggleDroneLight();
     void setNightMode();
     void setDayMode();
+    void setManualOverride(bool enabled);
     
     // Debug functions
     void printLightState() const;
-    void setDroneLightIntensity(float intensity);
+    
 private:
     void updateLightColours();
 };

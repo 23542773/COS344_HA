@@ -23,8 +23,11 @@ public:
 
   float getYaw();
   glm::vec3 getFront();
+  glm::vec3 getVelocity();
 
   void setAspectRatio(float aspect);
+
+  void update(float deltaTime);
 
   // orbit
   void setOrbitMode(bool enabled);
@@ -48,6 +51,13 @@ private:
   glm::vec3 Up;
   glm::vec3 Right;
   glm::vec3 WorldUp;
+
+  glm::vec3 Velocity;
+  glm::vec3 Acceleration;
+
+  float MaxSpeed;
+  float AccelerationRate;
+  float DecelerationRate;
 
   float aspectRatio;
 

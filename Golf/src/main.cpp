@@ -990,7 +990,7 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addBorder(sceneObjects, {h12X + 3.2f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
 
 
-  // Copy of Hole 13 (Elevated Green)
+  //  Hole 13 (Elevated Green)
   float h13X = 70.0f; float h13Z = 10.0f;
   addHolePath(sceneObjects, {h13X, 0.2f, h13Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
   addHoleCup(sceneObjects, {h13X, 0.35f, h13Z});
@@ -1000,7 +1000,7 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addBorder(sceneObjects, {h13X + 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
   addBorder(sceneObjects, {h13X, 1.1f, h13Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
 
-  // Copy of Hole 14 (L-Turn)
+  // Hole 14 (L-Turn)
   float h14X = 55.0f; float h14Z = 10.0f;
   addHolePathBare(sceneObjects, {h14X, 0.2f, h14Z}, {3.0f, 0.3f, 6.0f}, {0,0,0});
   addHolePathBare(sceneObjects, {h14X + 3.0f, 0.2f, h14Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0});
@@ -1010,14 +1010,14 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
   addHoleCup(sceneObjects, {h14X + 5.5f, 0.35f, h14Z + 1.5f});
 
-  // Copy of Hole 15 (Straight Path)
+  // Hole 15 (Straight Path)
   float h15X = 70.0f; float h15Z = 30.0f;
   addHolePathBare(sceneObjects, {h15X, 0.2f, h15Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
   addHoleCup(sceneObjects, {h15X, 0.35f, h15Z + 5.0f});
   addBorder(sceneObjects, {h15X - 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h15X + 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
 
-  // Copy of Hole 16 (Funnel)
+  // Hole 16 (Funnel)
   float h16X = 18.0f; float h16Z = 13.0f;
   addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
@@ -1027,7 +1027,7 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addBorder(sceneObjects, {h16X + 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h16X + 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
 
-  // Copy of Hole 17 (T-Junction)
+  // Hole 17 (T-Junction)
   float h17X = 60.0f; float h17Z = 37.0f;
   addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0});
@@ -1038,7 +1038,7 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addBorder(sceneObjects, {h17X - 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h17X + 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
 
-  // Copy of Hole 18 (Narrow Bridge)
+  // Hole 18 (Narrow Bridge)
   float h18X = 70.0f; float h18Z = 38.0f;
   addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});
@@ -1046,6 +1046,25 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   addHoleCup(sceneObjects, {h18X, 0.35f, h18Z + 7.0f});
   addBorder(sceneObjects, {h18X - 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h18X + 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+
+  sceneObjects.push_back(ShapeFactory::createCube(
+      {25.0f, 0.15f, 16.0f}, {8.0f, 0.1f, 6.0f}, {0, 0, 0}, water));
+
+  // Small rock in the water
+  sceneObjects.push_back(ShapeFactory::createCylinder(
+      {25.0f, 0.3f, 16.0f}, 0.8f, 0.3f, 32, glm::vec3(0), concrete));
+
+  // Water hazard 2 — center gap (top pink mark)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      {20.0f, 0.15f, 33.0f}, {6.0f, 0.1f, 5.0f}, {0, 0, 0}, water));
+  sceneObjects.push_back(ShapeFactory::createCylinder(
+      {20.0f, 0.3f, 33.0f}, 0.6f, 0.3f, 32, glm::vec3(0), concrete));
+
+  // Water hazard 3 — bottom-left open area (bottom pink mark)
+  sceneObjects.push_back(ShapeFactory::createCube(
+      {10.0f, 0.15f, 40.0f}, {7.0f, 0.1f, 6.0f}, {0, 0, 0}, water));
+  sceneObjects.push_back(ShapeFactory::createCylinder(
+      {10.0f, 0.3f, 40.0f}, 0.6f, 0.3f, 32, glm::vec3(0), concrete));
 
 
   float rollOffset = 0;

@@ -632,6 +632,34 @@ int main() {
           flag = new Mesh(v, i, objectShader.getProgramID());
   }
 
+  Mesh *bridge = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Bridge.obj", v, i))
+          bridge = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *boulder = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/boulder.obj", v, i))
+          boulder = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *fence = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Wooden_fence.obj", v, i))
+          fence = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *palmtree2 = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/PalmTree.obj", v, i))
+          palmtree2 = new Mesh(v, i, objectShader.getProgramID());
+  }
+
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
@@ -718,10 +746,84 @@ int main() {
           {0, 0, 0});
   
 std::vector<MeshInstance> meshInstances;
-if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
-if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f}, glm::vec3(1.0f), 0.0f});
-if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
-if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+
+  // ── Hole 1 area ──────────────────────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {10.0f, 0.0f, 26.0f},  glm::vec3(1.0f), 180.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {15.0f, 0.0f, 15.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     { 7.0f, 0.0f,  7.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {13.0f, 0.0f,  7.0f},  glm::vec3(1.0f),   0.0f});
+
+  // ── Top-left gap (holes 7 area) ──────────────────────────────
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 3.0f, 0.0f,  5.0f},  glm::vec3(1.0f),  30.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 6.0f, 0.0f,  8.0f},  glm::vec3(1.0f),  75.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    { 4.0f, 0.0f, 12.0f},  glm::vec3(1.0f),   0.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {2.0f, 0.0f, 20.0f},  glm::vec3(1.0f),   0.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {2.0f, 0.0f, 23.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     { 2.0f, 0.0f, 26.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Center-left gap (holes 2,3,16 area) ──────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {22.0f, 0.0f, 18.0f},  glm::vec3(1.0f),  90.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {24.0f, 0.0f, 22.0f},  glm::vec3(1.0f),  45.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{26.0f, 0.0f,  8.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Water hazard 1 surrounds (x≈25, z≈16) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {21.0f, 0.0f, 14.0f},  glm::vec3(1.0f),  20.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {29.0f, 0.0f, 18.0f},  glm::vec3(1.0f), 120.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {28.0f, 0.0f, 13.0f},  glm::vec3(1.0f),  60.0f});
+  // ── Hole 4 area (x≈10, z≈35-45) ─────────────────────────────
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {16.0f, 0.0f, 40.0f},  glm::vec3(1.0f),  90.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  { 5.0f, 0.0f, 38.0f},  glm::vec3(1.0f),  15.0f});
+  // ── Water hazard 3 surrounds (x≈10, z≈40) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    { 7.0f, 0.0f, 38.0f},  glm::vec3(1.0f),  45.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {14.0f, 0.0f, 42.0f},  glm::vec3(1.0f), 200.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     { 6.0f, 0.0f, 44.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 5 area (x≈45, z≈10-22) ─────────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {49.0f, 0.0f, 13.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {41.0f, 0.0f, 13.0f},  glm::vec3(1.0f),   0.0f});
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {50.0f, 0.0f, 22.0f},  glm::vec3(1.0f), 270.0f});
+  // ── Between holes 5 & 6 ──────────────────────────────────────
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {41.0f, 0.0f, 23.0f},  glm::vec3(1.0f),  90.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {52.0f, 0.0f, 24.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 6 area (x≈45, z≈25-33) ─────────────────────────────
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{50.0f, 0.0f, 28.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{41.0f, 0.0f, 30.0f},  glm::vec3(1.0f), 180.0f});
+  // ── Hole 8 area (x≈38, z≈35-40) ─────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {45.0f, 0.0f, 39.0f},  glm::vec3(1.0f), 180.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {32.0f, 0.0f, 43.0f},  glm::vec3(1.0f),  30.0f});
+  // ── Hole 9 area (x≈55-65, z≈25-32) ──────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {67.0f, 0.0f, 33.0f},  glm::vec3(1.0f),   0.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {52.0f, 0.0f, 35.0f},  glm::vec3(1.0f),  45.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {68.0f, 0.0f, 30.0f},  glm::vec3(1.0f),  90.0f});
+  // ── Hole 11 area (x≈50, z≈35-44) ────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {54.0f, 0.0f, 33.0f},  glm::vec3(1.0f),  90.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {46.0f, 0.0f, 41.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Hole 13 area (x≈70, z≈10-21) ────────────────────────────
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {66.0f, 0.0f, 14.0f},  glm::vec3(1.0f),   0.0f});
+  if (lamp)     meshInstances.push_back(MeshInstance{lamp,     {74.0f, 0.0f, 14.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{75.0f, 0.0f, 20.0f},  glm::vec3(1.0f),   0.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {65.0f, 0.0f, 18.0f},  glm::vec3(1.0f),  80.0f});
+  // ── Hole 15 area (x≈70, z≈30-42) ────────────────────────────
+  if (bench)    meshInstances.push_back(MeshInstance{bench,    {75.0f, 0.0f, 36.0f},  glm::vec3(1.0f), 270.0f});
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {65.0f, 0.0f, 33.0f},  glm::vec3(1.0f),  10.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {75.0f, 0.0f, 30.0f},  glm::vec3(1.0f),  90.0f});
+  // ── Water hazard 2 surrounds (x≈20, z≈33) ────────────────────
+  if (rocks)    meshInstances.push_back(MeshInstance{rocks,    {16.0f, 0.0f, 31.0f},  glm::vec3(1.0f), 160.0f});
+  if (tree)     meshInstances.push_back(MeshInstance{tree,     {17.0f, 0.0f, 36.0f},  glm::vec3(1.0f),   0.0f});
+  // ── Far bottom edge ───────────────────────────────────────────
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{35.0f, 0.0f, 47.0f},  glm::vec3(1.0f),   0.0f});
+  if (palmtree2)meshInstances.push_back(MeshInstance{palmtree2,{55.0f, 0.0f, 47.0f},  glm::vec3(1.0f),  90.0f});
+  if (boulder)  meshInstances.push_back(MeshInstance{boulder,  {65.0f, 0.0f, 45.0f},  glm::vec3(1.0f),  20.0f});
+  if (fence)    meshInstances.push_back(MeshInstance{fence,    {75.0f, 0.0f, 23.0f},  glm::vec3(1.0f),   0.0f});
+
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {10.0f, 0.0f, 10.0f},  glm::vec3(1.0f),   0.0f}); // hole 1
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {10.0f, 0.0f, 46.0f},  glm::vec3(1.0f),   0.0f}); // hole 4
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {45.0f, 0.0f, 22.0f},  glm::vec3(1.0f),   0.0f}); // hole 5 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {45.0f, 0.0f, 35.0f},  glm::vec3(1.0f),   0.0f}); // hole 6 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {35.0f, 0.0f, 33.0f},  glm::vec3(1.0f),   0.0f}); // hole 8
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {63.5f, 0.0f, 31.0f},  glm::vec3(1.0f),   0.0f}); // hole 9 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {53.0f, 0.0f, 44.0f},  glm::vec3(1.0f),   0.0f}); // hole 11 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 10.0f},  glm::vec3(1.0f),   0.0f}); // hole 13 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 35.0f},  glm::vec3(1.0f),   0.0f}); // hole 15 cup
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {60.5f, 0.0f, 37.0f},  glm::vec3(1.0f),   0.0f}); // hole 17 cups
+  if (flag)     meshInstances.push_back(MeshInstance{flag,     {70.0f, 0.0f, 45.0f},  glm::vec3(1.0f),   0.0f}); // hole 18 cup
 
          
  // Hole 2
@@ -985,7 +1087,7 @@ if (rocks) meshInstances5.push_back({rocks, {h5X - 5.0f, 0.0f, h5Z + 6.0f}, glm:
   addBorder(sceneObjects, {h12X + 3.2f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
 
 
-  // Copy of Hole 13 (Elevated Green)
+  //  Hole 13 (Elevated Green)
   float h13X = 70.0f; float h13Z = 10.0f;
   addHolePath(sceneObjects, {h13X, 0.2f, h13Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
   addHoleCup(sceneObjects, {h13X, 0.35f, h13Z});
@@ -995,7 +1097,7 @@ if (rocks) meshInstances5.push_back({rocks, {h5X - 5.0f, 0.0f, h5Z + 6.0f}, glm:
   addBorder(sceneObjects, {h13X + 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
   addBorder(sceneObjects, {h13X, 1.1f, h13Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
 
-  // Copy of Hole 14 (L-Turn)
+  // Hole 14 (L-Turn)
   float h14X = 55.0f; float h14Z = 10.0f;
   addHolePathBare(sceneObjects, {h14X, 0.2f, h14Z}, {3.0f, 0.3f, 6.0f}, {0,0,0});
   addHolePathBare(sceneObjects, {h14X + 3.0f, 0.2f, h14Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0});
@@ -1005,14 +1107,14 @@ if (rocks) meshInstances5.push_back({rocks, {h5X - 5.0f, 0.0f, h5Z + 6.0f}, glm:
   addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
   addHoleCup(sceneObjects, {h14X + 5.5f, 0.35f, h14Z + 1.5f});
 
-  // Copy of Hole 15 (Straight Path)
+  // Hole 15 (Straight Path)
   float h15X = 70.0f; float h15Z = 30.0f;
   addHolePathBare(sceneObjects, {h15X, 0.2f, h15Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
   addHoleCup(sceneObjects, {h15X, 0.35f, h15Z + 5.0f});
   addBorder(sceneObjects, {h15X - 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h15X + 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
 
-  // Copy of Hole 16 (Funnel)
+  // Hole 16 (Funnel)
   float h16X = 18.0f; float h16Z = 13.0f;
   addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
@@ -1022,7 +1124,7 @@ if (rocks) meshInstances5.push_back({rocks, {h5X - 5.0f, 0.0f, h5Z + 6.0f}, glm:
   addBorder(sceneObjects, {h16X + 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h16X + 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
 
-  // Copy of Hole 17 (T-Junction)
+  // Hole 17 (T-Junction)
   float h17X = 60.0f; float h17Z = 37.0f;
   addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0});
@@ -1033,7 +1135,7 @@ if (rocks) meshInstances5.push_back({rocks, {h5X - 5.0f, 0.0f, h5Z + 6.0f}, glm:
   addBorder(sceneObjects, {h17X - 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
   addBorder(sceneObjects, {h17X + 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
 
-  // Copy of Hole 18 (Narrow Bridge)
+  // Hole 18 (Narrow Bridge)
   float h18X = 70.0f; float h18Z = 38.0f;
   addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
   addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});

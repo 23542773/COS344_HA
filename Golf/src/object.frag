@@ -4,6 +4,7 @@ out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 VertexColor;
 
 uniform sampler2D texture_diffuse1;
 uniform int useTexture;
@@ -110,10 +111,18 @@ void main() {
     vec3 baseColor;
     if (useTexture == 1) {
         baseColor = texture(texture_diffuse1, TexCoords).rgb;
-    } else {
+    }  else {
+    if (VertexColor.r == 0.0 &&
+        VertexColor.g == 0.0 &&
+        VertexColor.b == 0.0)
+    {
         baseColor = objectColor;
     }
-    
+    else
+    {
+        baseColor = VertexColor;
+    }
+}   
     // Apply lighting to base color
     vec3 finalColor = baseColor * lighting;
     

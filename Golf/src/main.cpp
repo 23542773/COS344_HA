@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <ostream>
 #include <random>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,10 +36,19 @@ float lastY = 360.0f;
 bool firstMouse = true;
 
 bool isNight = false;
+bool isGray = false;
+
 Skybox *skybox;
 GLuint hudVAO, hudVBO;
 GLuint droneVAO, droneVBO;
 GLuint droneShader;
+
+GLuint rectVAO = 0;
+GLuint rectVBO = 0;
+GLuint rectShader = 0;
+
+GLuint crosshairVAO, crosshairVBO;
+GLuint crosshairShader;
 
 GLuint sceneFBO;
 GLuint sceneTexture;
@@ -52,6 +62,13 @@ LightManager g_lightManager;
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+
+struct MeshInstance {
+    Mesh* mesh;
+    glm::vec3 pos;
+    glm::vec3 scale;
+    float rotY;
+};
 
 const char *getError() {
   const char *errorDescription;
@@ -85,6 +102,8 @@ inline void startUpGLEW() {
   }
 }
 
+const int WINDOW_WIDTH = 1280;
+const int WINDOW_HEIGHT = 720;
 inline GLFWwindow *setUp() {
   startUpGLFW();
 
@@ -97,7 +116,8 @@ inline GLFWwindow *setUp() {
 
   GLFWwindow *window;
 
-  window = glfwCreateWindow(1280, 720, "Team's Golf Course", NULL, NULL);
+  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Team's Golf Course",
+                            NULL, NULL);
 
   if (window == NULL) {
     cout << getError() << endl;
@@ -127,6 +147,59 @@ inline GLFWwindow *setUp() {
 
   return window;
 }
+
+void initCrosshair() {
+
+  // Two lines crossing in the middle
+  // Horizontal line then vertical line
+
+  float crosshairVertices[] = {
+
+      // horizontal
+      -10.0f, 0.0f, 10.0f, 0.0f,
+
+      // vertical
+      0.0f, -10.0f, 0.0f, 10.0f};
+
+  glGenVertexArrays(1, &crosshairVAO);
+  glGenBuffers(1, &crosshairVBO);
+
+  glBindVertexArray(crosshairVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(crosshairVertices), crosshairVertices,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+
+  glEnableVertexAttribArray(0);
+
+  glBindVertexArray(0);
+}
+
+void initRectRenderer() {
+
+  float vertices[12] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+
+                        0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+
+  glGenVertexArrays(1, &rectVAO);
+  glGenBuffers(1, &rectVBO);
+
+  glBindVertexArray(rectVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+
+  glEnableVertexAttribArray(0);
+
+  glBindVertexArray(0);
+
+  rectShader = LoadShaders("rect.vert", "rect.frag");
+}
+
 void initFramebuffer(int width, int height) {
   glGenFramebuffers(1, &sceneFBO);
   glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
@@ -271,8 +344,6 @@ void addTunnel(std::vector<SceneObject> &scene, glm::vec3 center, float wx,
       center + glm::vec3((wx * 0.5f + 0.2f), 1.0f, 0),
       glm::vec3(0.4f, 1.8f, wz), glm::vec3(0), concrete));
 }
-const int WINDOW_WIDTH = 1280;
-const int WINDOW_HEIGHT = 720;
 
 const int HUD_X = fbWidth * 0.02f;
 const int HUD_Y = fbHeight * 0.02f;
@@ -302,41 +373,57 @@ void initDroneMarker() {
   glBindVertexArray(0);
 }
 
-void drawFilledRect(float x, float y, float width, float height,
-                    glm::vec4 color) {
+void drawCrosshair() {
 
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
+  glUseProgram(crosshairShader);
 
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
+  glBindVertexArray(crosshairVAO);
 
   glDisable(GL_DEPTH_TEST);
 
-  glColor4f(color.r, color.g, color.b, color.a);
+  glUniform2f(glGetUniformLocation(crosshairShader, "uResolution"),
+              (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
 
-  glBegin(GL_QUADS);
+  glUniform2f(glGetUniformLocation(crosshairShader, "uCenter"),
+              WINDOW_WIDTH * 0.5f, WINDOW_HEIGHT * 0.5f);
 
-  glVertex2f(x, y);
-  glVertex2f(x + width, y);
-  glVertex2f(x + width, y + height);
-  glVertex2f(x, y + height);
+  glUniform4f(glGetUniformLocation(crosshairShader, "uColor"), 1.0f, 1.0f, 1.0f,
+              1.0f);
 
-  glEnd();
+  glLineWidth(1.0f);
+
+  glDrawArrays(GL_LINES, 0, 4);
 
   glEnable(GL_DEPTH_TEST);
 
-  glPopMatrix();
-
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-
-  glMatrixMode(GL_MODELVIEW);
+  glBindVertexArray(0);
 }
 
+void drawFilledRect(float x, float y, float width, float height,
+                    glm::vec4 color) {
+
+  glUseProgram(rectShader);
+
+  glDisable(GL_DEPTH_TEST);
+
+  glUniform2f(glGetUniformLocation(rectShader, "uPosition"), x, y);
+
+  glUniform2f(glGetUniformLocation(rectShader, "uSize"), width, height);
+
+  glUniform2f(glGetUniformLocation(rectShader, "uResolution"),
+              (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
+
+  glUniform4f(glGetUniformLocation(rectShader, "uColor"), color.r, color.g,
+              color.b, color.a);
+
+  glBindVertexArray(rectVAO);
+
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+
+  glBindVertexArray(0);
+
+  glEnable(GL_DEPTH_TEST);
+}
 void drawRectOutline(float x, float y, float width, float height,
                      float thickness, glm::vec4 color) {
 
@@ -347,6 +434,57 @@ void drawRectOutline(float x, float y, float width, float height,
   drawFilledRect(x, y, thickness, height, color);
 
   drawFilledRect(x + width - thickness, y, thickness, height, color);
+}
+void drawSpeedIndicator(float speed) {
+
+  // Bottom-right corner placement
+  float bgWidth = 220.0f;
+  float bgHeight = 24.0f;
+
+  float x = WINDOW_WIDTH - bgWidth - 40.0f;
+  float y = 40.0f;
+
+  // Background bar
+  drawFilledRect(x, y, bgWidth, bgHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.7f));
+
+  drawRectOutline(x, y, bgWidth, bgHeight, 2.0f,
+                  glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+
+  // Clamp speed
+  float maxSpeed = 20.0f;
+  float normalized = glm::clamp(speed / maxSpeed, 0.0f, 1.0f);
+
+  // Bar disappears completely when not moving
+  if (normalized <= 0.001f)
+    return;
+
+  // Scale bar width based on speed
+  float padding = 3.0f;
+  float barWidth = (bgWidth - padding * 2.0f) * normalized;
+  float barHeight = bgHeight - padding * 2.0f;
+
+  glm::vec4 barColor;
+
+  // Change colour based on speed
+  if (normalized < 0.25f) {
+
+    barColor = glm::vec4(0.0f, 1.0f, 0.0f, 0.9f);
+
+  } else if (normalized < 0.5f) {
+
+    barColor = glm::vec4(1.0f, 1.0f, 0.0f, 0.9f);
+
+  } else if (normalized < 0.75f) {
+
+    barColor = glm::vec4(1.0f, 0.5f, 0.0f, 0.9f);
+
+  } else {
+
+    barColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.9f);
+  }
+
+  // Speed bar
+  drawFilledRect(x + padding, y + padding, barWidth, barHeight, barColor);
 }
 
 void drawDroneMarker(float centerX, float centerY, float size) {
@@ -393,6 +531,7 @@ bool collide(const glm::vec3 &position, float radius, const SceneObject &obj) {
 
   return false;
 }
+
 void initScreenQuad() {
   float quad[] = {-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
 
@@ -430,6 +569,7 @@ void renderScene(std::vector<SceneObject> &sceneObjects, Shader &shader,
     ShapeFactory::drawObject(object, shaderID, view, projection);
   }
 }
+
 int main() {
   GLFWwindow *window;
 
@@ -461,26 +601,70 @@ int main() {
 
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
-  if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
-    windmill = new Mesh(vertices, indices);
-  } else {
-    std::cout << "Failed to load windmill.obj" << std::endl;
-  }
+  // if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
+  //   windmill = new Mesh(vertices, indices);
+  // } else {
+  //   std::cout << "Failed to load windmill.obj" << std::endl;
+  // }
 
   // Use Shader class instead of GLuint for lighting support
   Shader objectShader("object.vert", "object.frag");
+
+  //==================================Objects===================================
+   Mesh *bench = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Bench.obj", v, i))
+          bench = new Mesh(v, i, objectShader.getProgramID());
+  }
+  
+  Mesh *tree = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/PalmTree (1).obj", v, i))
+          tree = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *lamp = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/FirstLamppost.obj", v, i))
+          lamp = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *boulders = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/boulders.obj", v, i))
+          boulders = new Mesh(v, i, objectShader.getProgramID());
+  }
+  Mesh *rocks = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Rocks.obj", v, i))
+          rocks = new Mesh(v, i, objectShader.getProgramID());
+  }
+  Mesh *flag = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Flag.obj", v, i))
+          flag = new Mesh(v, i, objectShader.getProgramID());
+  }
+
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
-  initDroneMarker();
-  initScreenQuad();
+  crosshairShader = LoadShaders("crosshair.vert", "crosshair.frag");
 
-  g_lightManager.getDroneLight().diffuse =
-      glm::vec3(3.0f, 3.0f, 3.0f); // 3x brighter
-  g_lightManager.getDroneLight().ambient =
-      glm::vec3(0.4f, 0.4f, 0.4f); // Higher ambient
-  g_lightManager.getDroneLight().specular =
-      glm::vec3(2.0f, 2.0f, 2.0f); // Brighter specular
+  initDroneMarker();
+  initCrosshair();
+  initScreenQuad();
+  initRectRenderer();
+
+  // Boost drone light intensity for better visibility
+  g_lightManager.getDroneLight().diffuse = glm::vec3(3.0f, 3.0f, 3.0f);
+  g_lightManager.getDroneLight().ambient = glm::vec3(0.4f, 0.4f, 0.4f);
+  g_lightManager.getDroneLight().specular = glm::vec3(2.0f, 2.0f, 2.0f);
 
   initFramebuffer(fbWidth, fbHeight);
   float hudVertices[] = {
@@ -527,112 +711,161 @@ int main() {
   //   Far right   x=60–67: hole 13
   // ═══════════════════════════════════════════════════════════════
 
-  //Hole 1
-  float h1X = 10.0f; float h1Z = 10.0f;
+  // Hole 1
+  float h1X = 10.0f;
+  float h1Z = 10.0f;
   // Lower path
-  addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
+  addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
   addHoleCup(sceneObjects, {h1X, 0.35f, h1Z}); // <--- Cup now on small square
-  
-  // Ramp
-  sceneObjects.push_back(ShapeFactory::createCube({h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
-  // Elevated Green
-  sceneObjects.push_back(ShapeFactory::createCube({h1X, 0.8f, h1Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0,0,0}, turf));
-  
-  // Walls around elevated green
-  addBorder(sceneObjects, {h1X - 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
-  addBorder(sceneObjects, {h1X + 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
-  addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
 
-  //Hole 2
-  float h2X = 30.0f; float h2Z = 10.0f;
+  // Ramp
+  sceneObjects.push_back(ShapeFactory::createCube(
+      {h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
+  // Elevated Green
+  sceneObjects.push_back(ShapeFactory::createCube(
+      {h1X, 0.8f, h1Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0, 0, 0}, turf));
+
+  // Walls around elevated green
+  addBorder(sceneObjects, {h1X - 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f},
+            {0, 0, 0});
+  addBorder(sceneObjects, {h1X + 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f},
+            {0, 0, 0});
+  addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f},
+            {0, 0, 0});
+  
+std::vector<MeshInstance> meshInstances;
+if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
+if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f}, glm::vec3(1.0f), 0.0f});
+if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+
+            
+
+  // Hole 2
+  float h2X = 30.0f;
+  float h2Z = 10.0f;
   // Paths
-  addHolePathBare(sceneObjects, {h2X, 0.2f, h2Z}, {3.0f, 0.3f, 6.0f}, {0,0,0}); // Vertical
-  addHolePathBare(sceneObjects, {h2X + 3.0f, 0.2f, h2Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0}); // Horizontal
+  addHolePathBare(sceneObjects, {h2X, 0.2f, h2Z}, {3.0f, 0.3f, 6.0f},
+                  {0, 0, 0}); // Vertical
+  addHolePathBare(sceneObjects, {h2X + 3.0f, 0.2f, h2Z + 1.5f},
+                  {6.0f, 0.3f, 3.0f}, {0, 0, 0}); // Horizontal
 
   // 1. Left Wall (Vertical section only)
-  addBorder(sceneObjects, {h2X - 1.7f, 0.5f, h2Z}, {0.4f, 0.6f, 6.0f}, {0,0,0});
-  
+  addBorder(sceneObjects, {h2X - 1.7f, 0.5f, h2Z}, {0.4f, 0.6f, 6.0f},
+            {0, 0, 0});
+
   // 2. Bottom Wall (Horizontal section only)
-  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z - 0.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z - 0.2f}, {6.4f, 0.6f, 0.4f},
+            {0, 0, 0});
 
   // 3. Right Wall (Horizontal section end)
-  addBorder(sceneObjects, {h2X + 6.2f, 0.5f, h2Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+  addBorder(sceneObjects, {h2X + 6.2f, 0.5f, h2Z + 1.5f}, {0.4f, 0.6f, 3.0f},
+            {0, 0, 0});
 
   // 4. Top Wall (Horizontal section top)
-  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
-  
+  addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z + 3.2f}, {6.4f, 0.6f, 0.4f},
+            {0, 0, 0});
+
   addHoleCup(sceneObjects, {h2X + 5.5f, 0.35f, h2Z + 1.5f});
 
-  //Hole 3
-  float h3X = 30.0f; float h3Z = 25.0f;
+  // Hole 3
+  float h3X = 30.0f;
+  float h3Z = 25.0f;
 
   // 1. Path Segments (Bare)
-  addHolePathBare(sceneObjects, {h3X, 0.2f, h3Z}, {3.0f, 0.3f, 6.0f}, {0, 20, 0});
-  addHolePathBare(sceneObjects, {h3X + 2.0f, 0.2f, h3Z + 6.0f}, {3.0f, 0.3f, 6.0f}, {0, -20, 0});
-  addHolePathBare(sceneObjects, {h3X + 1.0f, 0.2f, h3Z + 3.0f}, {3.0f, 0.3f, 3.5f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h3X, 0.2f, h3Z}, {3.0f, 0.3f, 6.0f},
+                  {0, 20, 0});
+  addHolePathBare(sceneObjects, {h3X + 2.0f, 0.2f, h3Z + 6.0f},
+                  {3.0f, 0.3f, 6.0f}, {0, -20, 0});
+  addHolePathBare(sceneObjects, {h3X + 1.0f, 0.2f, h3Z + 3.0f},
+                  {3.0f, 0.3f, 3.5f}, {0, 0, 0});
 
   // 2. Borders (Blue lines: trimmed to 4.5f to prevent overhang)
   // Top-left wall
-  addBorder(sceneObjects, {h3X - 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f}, {0, 20, 0}); 
-  
+  addBorder(sceneObjects, {h3X - 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f},
+            {0, 20, 0});
+
   // Right-side walls (Split to stop at the turn)
-  addBorder(sceneObjects, {h3X + 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f}, {0, 20, 0}); 
-  addBorder(sceneObjects, {h3X + 3.7f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -20, 0});
-  
+  addBorder(sceneObjects, {h3X + 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f},
+            {0, 20, 0});
+  addBorder(sceneObjects, {h3X + 3.7f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f},
+            {0, -20, 0});
+
   // Bottom-right wall
-  addBorder(sceneObjects, {h3X + 0.5f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -20, 0});
+  addBorder(sceneObjects, {h3X + 0.5f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f},
+            {0, -20, 0});
 
   addHoleCup(sceneObjects, {h3X + 2.0f, 0.35f, h3Z + 7.5f});
 
-  //hole 4
-  float h4X = 10.0f; float h4Z = 35.0f;
+  // hole 4
+  float h4X = 10.0f;
+  float h4Z = 35.0f;
 
   // 1. ADD BACK THE TURF (Missing in your current view)
-  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 2.0f}, {3.0f, 0.3f, 4.0f}, {0,0,0}); // Main
-  addHolePathBare(sceneObjects, {h4X - 2.5f, 0.2f, h4Z + 6.0f}, {3.0f, 0.3f, 5.0f}, {0, -15, 0}); // Left branch
-  addHolePathBare(sceneObjects, {h4X + 2.5f, 0.2f, h4Z + 6.0f}, {3.0f, 0.3f, 5.0f}, {0, 15, 0}); // Right branch
-  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 9.5f}, {8.0f, 0.3f, 4.0f}, {0,0,0}); // Rejoin
+  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 2.0f}, {3.0f, 0.3f, 4.0f},
+                  {0, 0, 0}); // Main
+  addHolePathBare(sceneObjects, {h4X - 2.5f, 0.2f, h4Z + 6.0f},
+                  {3.0f, 0.3f, 5.0f}, {0, -15, 0}); // Left branch
+  addHolePathBare(sceneObjects, {h4X + 2.5f, 0.2f, h4Z + 6.0f},
+                  {3.0f, 0.3f, 5.0f}, {0, 15, 0}); // Right branch
+  addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 9.5f}, {8.0f, 0.3f, 4.0f},
+                  {0, 0, 0}); // Rejoin
   addHoleCup(sceneObjects, {h4X, 0.35f, h4Z + 9.5f});
 
   // 2. THE BORDERS (The ones you already have)
-  addBorder(sceneObjects, {h4X - 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f}, {0,0,0});
-  addBorder(sceneObjects, {h4X + 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f}, {0,0,0});
-  addBorder(sceneObjects, {h4X - 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, -15, 0});
-  addBorder(sceneObjects, {h4X + 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f}, {0, 15, 0});
+  addBorder(sceneObjects, {h4X - 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f},
+            {0, 0, 0});
+  addBorder(sceneObjects, {h4X + 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f},
+            {0, 0, 0});
+  addBorder(sceneObjects, {h4X - 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f},
+            {0, -15, 0});
+  addBorder(sceneObjects, {h4X + 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f},
+            {0, 15, 0});
 
   // hole 5
 
-  float h5X = 45.0f; float h5Z = 10.0f; 
+  float h5X = 45.0f;
+  float h5Z = 10.0f;
 
   // 1. Single Straight Path
-  addHolePathBare(sceneObjects, {h5X, 0.2f, h5Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h5X, 0.2f, h5Z}, {4.0f, 0.3f, 12.0f},
+                  {0, 0, 0});
   addHoleCup(sceneObjects, {h5X, 0.35f, h5Z + 5.0f});
 
   // 2. Clean Straight Borders
   // Left border
-  addBorder(sceneObjects, {h5X - 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h5X - 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f},
+            {0, 0, 0});
   // Right border
-  addBorder(sceneObjects, {h5X + 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h5X + 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f},
+            {0, 0, 0});
 
-  //hole 6
-  float h6X = 45.0f; float h6Z = 25.0f;
+  // hole 6
+  float h6X = 45.0f;
+  float h6Z = 25.0f;
 
   // 1. Path (Wide base tapering to narrow)
   // Wide section
-  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z}, {6.0f, 0.3f, 5.0f},
+                  {0, 0, 0});
   // Narrow section
-  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
-  
+  addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z + 6.5f}, {2.0f, 0.3f, 8.0f},
+                  {0, 0, 0});
+
   addHoleCup(sceneObjects, {h6X, 0.35f, h6Z + 10.0f});
 
   // 2. Borders (Angled to create the funnel effect)
   // Left side
-  addBorder(sceneObjects, {h6X - 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Wide wall
-  addBorder(sceneObjects, {h6X - 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}); // Narrow wall
-  
+  addBorder(sceneObjects, {h6X - 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f},
+            {0, 0, 0}); // Wide wall
+  addBorder(sceneObjects, {h6X - 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f},
+            {0, 0, 0}); // Narrow wall
+
   // Right side
-  addBorder(sceneObjects, {h6X + 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Wide wall
-  addBorder(sceneObjects, {h6X + 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}); // Narrow wall
+  addBorder(sceneObjects, {h6X + 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f},
+            {0, 0, 0}); // Wide wall
+  addBorder(sceneObjects, {h6X + 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f},
+            {0, 0, 0}); // Narrow wall
 
   //hole 7
   float h7X = 2.0f; float h7Z = 15.0f;
@@ -817,9 +1050,14 @@ int main() {
 
   float rollOffset = 0;
   static bool nPressedLast = false;
-  glm::vec3 lastCamPos;
   static bool gPressedLast = false;
-  bool grayscale = false;
+  glm::vec3 lastCamPos;
+
+  // Auto day/night cycle variables
+  static float timeOfDay = 0.5f;    // Start at noon (0.5)
+  static float cycleSpeed = 0.0001; // Full cycle in ~33 minutes at 60fps
+  static float dayNightFactor = 0.0f;
+  static bool autoCycleActive = true;
 
   // F-key press tracking
   static bool f1Pressed = false;
@@ -837,6 +1075,7 @@ int main() {
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     rollOffset = 0;
+
     bool nPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
 
     if (nPressed && !nPressedLast) {
@@ -848,10 +1087,10 @@ int main() {
     bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
 
     if (gPressed && !gPressedLast) {
-      grayscale = !grayscale;
+      isGray = !isGray;
     }
 
-    gPressedLast = gPressed;
+    nPressedLast = nPressed;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
@@ -918,6 +1157,8 @@ int main() {
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
       camera->processKeyboard(DOWN, deltaTime);
 
+    camera->update(deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
       camera->MovementSpeed += 0.1f;
 
@@ -937,6 +1178,97 @@ int main() {
       rollOffset += 0.5;
 
     camera->processRoll(rollOffset);
+
+    // ─────────────────────────────────────────────────────────────
+    // SMOOTH AUTO DAY/NIGHT CYCLE
+    // F5: Resume auto cycle (if manually overridden)
+    // F2/F3: Manual override to night/day
+    // ─────────────────────────────────────────────────────────────
+
+    // F5: Resume auto cycle (clear manual override)
+    static bool f5Pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+      if (!f5Pressed) {
+        g_lightManager.resumeAutoCycle();
+        f5Pressed = true;
+      }
+    } else {
+      f5Pressed = false;
+    }
+
+    // Update time of day (always running, but only applied if not manually
+    // overridden)
+    timeOfDay += cycleSpeed * deltaTime * 60.0f;
+    if (timeOfDay >= 1.0f)
+      timeOfDay -= 1.0f;
+
+    // Map time to day/night factor with smooth transitions
+    float factor;
+    if (timeOfDay < 0.60f) {
+      factor = 0.0f; // Full day
+    } else if (timeOfDay < 0.65f) {
+      // Sunset transition (0.60 to 0.65) - longer for smoother transition
+      float t = (timeOfDay - 0.60f) / 0.05f;
+      factor = t;
+    } else if (timeOfDay < 0.80f) {
+      factor = 1.0f; // Full night
+    } else if (timeOfDay < 0.85f) {
+      // Sunrise transition (0.80 to 0.85)
+      float t = (timeOfDay - 0.80f) / 0.05f;
+      factor = 1.0f - t;
+    } else {
+      factor = 0.0f; // Full day
+    }
+
+    dayNightFactor = factor;
+
+    // Apply smooth lighting transition (respects manualOverride internally)
+    g_lightManager.setDayNightFactor(dayNightFactor);
+
+    // Update skybox with hysteresis to prevent rapid switching
+    static bool lastSkyboxNight = false;
+    static float switchHysteresis = 0.1f; // 10% buffer zone
+
+    bool shouldBeNight;
+    if (dayNightFactor > 0.6f) {
+      shouldBeNight = true;
+    } else if (dayNightFactor < 0.4f) {
+      shouldBeNight = false;
+    } else {
+      shouldBeNight = lastSkyboxNight; // Stay in current state in the middle
+    }
+
+    if (shouldBeNight != lastSkyboxNight) {
+      isNight = shouldBeNight;
+      lastSkyboxNight = shouldBeNight;
+      std::cout << "Skybox switched to: " << (isNight ? "NIGHT" : "DAY")
+                << " (factor: " << dayNightFactor << ")" << std::endl;
+    }
+
+    // Rotate sun continuously
+    float sunAngle;
+    if (timeOfDay < 0.25f) {
+      sunAngle = 180.0f + (timeOfDay / 0.25f) * 90.0f;
+    } else if (timeOfDay < 0.75f) {
+      sunAngle = (timeOfDay - 0.25f) / 0.5f * 180.0f;
+    } else {
+      sunAngle = 180.0f + (timeOfDay - 0.75f) / 0.25f * 90.0f;
+    }
+
+    float rad = glm::radians(sunAngle);
+    glm::vec3 sunDir = glm::normalize(glm::vec3(cos(rad), -sin(rad), 0.3f));
+    g_lightManager.setSunDirection(sunDir);
+
+    // Debug print less frequently
+    static int cycleDebugFrame = 0;
+    if (cycleDebugFrame++ % 600 == 0) {
+      std::cout << "Auto Cycle - Time: " << timeOfDay
+                << " | Factor: " << dayNightFactor
+                << " | Sun Angle: " << sunAngle << "°"
+                << " | Manual Override: "
+                << (g_lightManager.isManualOverride() ? "YES" : "NO")
+                << std::endl;
+    }
 
     // ─────────────────────────────────────────────────────────────
     // UPDATE DRONE LIGHT POSITION AND DIRECTION
@@ -997,13 +1329,25 @@ int main() {
     objectShader.setVec3("viewPos", camera->Position);
 
     terrain->draw(view, projection);
+
+    for (auto& inst : meshInstances) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, inst.pos);
+    model = glm::rotate(model, glm::radians(inst.rotY), glm::vec3(0,1,0));
+    model = glm::scale(model, inst.scale);
+    objectShader.use();
+    g_lightManager.bindAllLights(objectShader);
+    objectShader.setVec3("viewPos", camera->Position);
+    inst.mesh->draw(view, projection, model);
+}
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(screenShader);
 
     glUniform1i(glGetUniformLocation(screenShader, "nightMode"), isNight);
-    glUniform1i(glGetUniformLocation(screenShader, "grayscale"), grayscale);
+    glUniform1i(glGetUniformLocation(screenShader, "grayscale"), isGray);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTexture);
@@ -1048,9 +1392,16 @@ int main() {
 
     // Restore viewport
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    // drone speed calc
+    float droneSpeed = glm::length(camera->getVelocity());
 
     // Drone marker
     drawDroneMarker(HUD_X + HUD_WIDTH * 0.5f, HUD_Y + HUD_HEIGHT * 0.5f, 10.0f);
+    // Crosshair
+    drawCrosshair();
+    // Speed indicator
+    drawSpeedIndicator(droneSpeed);
+
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;

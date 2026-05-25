@@ -256,38 +256,32 @@ glm::vec3 black(0.02f, 0.02f, 0.02f);
 // ─── BORDER HELPERS ──────────────────────────────────────────────────────────
 
 void addBorder(std::vector<SceneObject> &scene, glm::vec3 pos, glm::vec3 scale,
-               glm::vec3 rot) {
-  scene.push_back(ShapeFactory::createCube(pos, scale, rot, border));
+               glm::vec3 rot, const std::string &texturePath = "") {
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, border, texturePath));
 }
 
 // Full bordered path — left + right long sides + front + back caps
 void addHolePath(std::vector<SceneObject> &scene, glm::vec3 pos,
-                 glm::vec3 scale, glm::vec3 rot) {
-  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
+                 glm::vec3 scale, glm::vec3 rot,
+                 const std::string &texturePath = "") {
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf, texturePath));
   float hw = scale.x * 0.5f + 0.2f;
   float hd = scale.z * 0.5f + 0.2f;
-  // Long sides (along Z)
-  addBorder(scene, pos + glm::vec3(-hw, 0.3f, 0),
-            glm::vec3(0.4f, 0.6f, scale.z + 0.4f), rot);
-  addBorder(scene, pos + glm::vec3(hw, 0.3f, 0),
-            glm::vec3(0.4f, 0.6f, scale.z + 0.4f), rot);
-  // End caps (along X)
-  addBorder(scene, pos + glm::vec3(0, 0.3f, -hd),
-            glm::vec3(scale.x + 0.8f, 0.6f, 0.4f), rot);
-  addBorder(scene, pos + glm::vec3(0, 0.3f, hd),
-            glm::vec3(scale.x + 0.8f, 0.6f, 0.4f), rot);
+  addBorder(scene, pos + glm::vec3(-hw, 0.3f, 0), {0.4f, 0.6f, scale.z + 0.4f}, rot);
+  addBorder(scene, pos + glm::vec3( hw, 0.3f, 0), {0.4f, 0.6f, scale.z + 0.4f}, rot);
+  addBorder(scene, pos + glm::vec3(0, 0.3f, -hd), {scale.x + 0.8f, 0.6f, 0.4f}, rot);
+  addBorder(scene, pos + glm::vec3(0, 0.3f,  hd), {scale.x + 0.8f, 0.6f, 0.4f}, rot);
 }
 
 // Path with only LEFT+RIGHT borders — use for vertical arms that connect
 // top+bottom
 void addHolePathV(std::vector<SceneObject> &scene, glm::vec3 pos,
-                  glm::vec3 scale, glm::vec3 rot) {
-  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
+                  glm::vec3 scale, glm::vec3 rot,
+                  const std::string &texturePath = "") {
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf, texturePath));
   float hw = scale.x * 0.5f + 0.2f;
-  addBorder(scene, pos + glm::vec3(-hw, 0.3f, 0),
-            glm::vec3(0.4f, 0.6f, scale.z), rot);
-  addBorder(scene, pos + glm::vec3(hw, 0.3f, 0), glm::vec3(0.4f, 0.6f, scale.z),
-            rot);
+  addBorder(scene, pos + glm::vec3(-hw, 0.3f, 0), {0.4f, 0.6f, scale.z}, rot);
+  addBorder(scene, pos + glm::vec3( hw, 0.3f, 0), {0.4f, 0.6f, scale.z}, rot);
 }
 
 // Path with only FRONT+BACK borders — use for horizontal connectors
@@ -303,8 +297,9 @@ void addHolePathH(std::vector<SceneObject> &scene, glm::vec3 pos,
 
 // Bare surface — no borders, used inside junctions
 void addHolePathBare(std::vector<SceneObject> &scene, glm::vec3 pos,
-                     glm::vec3 scale, glm::vec3 rot) {
-  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf));
+                     glm::vec3 scale, glm::vec3 rot,
+                     const std::string &texturePath = "") {
+  scene.push_back(ShapeFactory::createCube(pos, scale, rot, turf, texturePath));
 }
 
 void addHoleCup(std::vector<SceneObject> &scene, glm::vec3 pos) {
@@ -711,27 +706,30 @@ int main() {
   //   Far right   x=60–67: hole 13
   // ═══════════════════════════════════════════════════════════════
 
+
   // Hole 1
   float h1X = 10.0f;
   float h1Z = 10.0f;
   // Lower path
-  addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
+  addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h1X, 0.35f, h1Z}); // <--- Cup now on small square
 
   // Ramp
   sceneObjects.push_back(ShapeFactory::createCube(
-      {h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
+    {h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf,
+    "assets/textures/grass_texture.png"));
   // Elevated Green
   sceneObjects.push_back(ShapeFactory::createCube(
-      {h1X, 0.8f, h1Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0, 0, 0}, turf));
+    {h1X, 0.8f, h1Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0, 0, 0}, turf,
+    "assets/textures/grass_texture.png"));
 
   // Walls around elevated green
   addBorder(sceneObjects, {h1X - 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f},
-            {0, 0, 0});
+          {0, 0, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h1X + 3.2f, 1.1f, h1Z + 8.0f}, {0.4f, 0.6f, 6.0f},
-            {0, 0, 0});
+          {0, 0, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f},
-            {0, 0, 0});
+          {0, 0, 0}, "assets/textures/brick_texture.png");
   
 std::vector<MeshInstance> meshInstances;
 if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
@@ -739,32 +737,31 @@ if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f}, glm::
 if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
 if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
 
-            
-
-  // Hole 2
+         
+ // Hole 2
   float h2X = 30.0f;
   float h2Z = 10.0f;
   // Paths
   addHolePathBare(sceneObjects, {h2X, 0.2f, h2Z}, {3.0f, 0.3f, 6.0f},
-                  {0, 0, 0}); // Vertical
+                  {0, 0, 0}, "assets/textures/grass_texture.png"); // Vertical
   addHolePathBare(sceneObjects, {h2X + 3.0f, 0.2f, h2Z + 1.5f},
-                  {6.0f, 0.3f, 3.0f}, {0, 0, 0}); // Horizontal
+                  {6.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png"); // Horizontal
 
   // 1. Left Wall (Vertical section only)
   addBorder(sceneObjects, {h2X - 1.7f, 0.5f, h2Z}, {0.4f, 0.6f, 6.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // 2. Bottom Wall (Horizontal section only)
   addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z - 0.2f}, {6.4f, 0.6f, 0.4f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // 3. Right Wall (Horizontal section end)
   addBorder(sceneObjects, {h2X + 6.2f, 0.5f, h2Z + 1.5f}, {0.4f, 0.6f, 3.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // 4. Top Wall (Horizontal section top)
   addBorder(sceneObjects, {h2X + 3.0f, 0.5f, h2Z + 3.2f}, {6.4f, 0.6f, 0.4f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
 
   addHoleCup(sceneObjects, {h2X + 5.5f, 0.35f, h2Z + 1.5f});
 
@@ -774,26 +771,26 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
 
   // 1. Path Segments (Bare)
   addHolePathBare(sceneObjects, {h3X, 0.2f, h3Z}, {3.0f, 0.3f, 6.0f},
-                  {0, 20, 0});
+                  {0, 20, 0}, "assets/textures/grass_texture.png");
   addHolePathBare(sceneObjects, {h3X + 2.0f, 0.2f, h3Z + 6.0f},
-                  {3.0f, 0.3f, 6.0f}, {0, -20, 0});
+                  {3.0f, 0.3f, 6.0f}, {0, -20, 0}, "assets/textures/grass_texture.png");
   addHolePathBare(sceneObjects, {h3X + 1.0f, 0.2f, h3Z + 3.0f},
-                  {3.0f, 0.3f, 3.5f}, {0, 0, 0});
+                  {3.0f, 0.3f, 3.5f}, {0, 0, 0}, "assets/textures/grass_texture.png");
 
   // 2. Borders (Blue lines: trimmed to 4.5f to prevent overhang)
   // Top-left wall
   addBorder(sceneObjects, {h3X - 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f},
-            {0, 20, 0});
+            {0, 20, 0}, "assets/textures/brick_texture.png");
 
   // Right-side walls (Split to stop at the turn)
   addBorder(sceneObjects, {h3X + 1.5f, 0.5f, h3Z}, {0.4f, 0.6f, 4.5f},
-            {0, 20, 0});
+            {0, 20, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h3X + 3.7f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f},
-            {0, -20, 0});
+            {0, -20, 0}, "assets/textures/brick_texture.png");
 
   // Bottom-right wall
   addBorder(sceneObjects, {h3X + 0.5f, 0.5f, h3Z + 6.0f}, {0.4f, 0.6f, 4.5f},
-            {0, -20, 0});
+            {0, -20, 0}, "assets/textures/brick_texture.png");
 
   addHoleCup(sceneObjects, {h3X + 2.0f, 0.35f, h3Z + 7.5f});
 
@@ -803,24 +800,24 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
 
   // 1. ADD BACK THE TURF (Missing in your current view)
   addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 2.0f}, {3.0f, 0.3f, 4.0f},
-                  {0, 0, 0}); // Main
+                  {0, 0, 0}, "assets/textures/grass_texture.png"); // Main
   addHolePathBare(sceneObjects, {h4X - 2.5f, 0.2f, h4Z + 6.0f},
-                  {3.0f, 0.3f, 5.0f}, {0, -15, 0}); // Left branch
+                  {3.0f, 0.3f, 5.0f}, {0, -15, 0},"assets/textures/grass_texture.png"); // Left branch
   addHolePathBare(sceneObjects, {h4X + 2.5f, 0.2f, h4Z + 6.0f},
-                  {3.0f, 0.3f, 5.0f}, {0, 15, 0}); // Right branch
+                  {3.0f, 0.3f, 5.0f}, {0, 15, 0},"assets/textures/grass_texture.png"); // Right branch
   addHolePathBare(sceneObjects, {h4X, 0.2f, h4Z + 9.5f}, {8.0f, 0.3f, 4.0f},
-                  {0, 0, 0}); // Rejoin
+                  {0, 0, 0}, "assets/textures/grass_texture.png"); // Rejoin
   addHoleCup(sceneObjects, {h4X, 0.35f, h4Z + 9.5f});
 
   // 2. THE BORDERS (The ones you already have)
   addBorder(sceneObjects, {h4X - 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/grass_texture.png");
   addBorder(sceneObjects, {h4X + 1.7f, 0.5f, h4Z + 2.0f}, {0.4f, 0.6f, 4.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h4X - 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f},
-            {0, -15, 0});
+            {0, -15, 0}, "assets/textures/brick_texture.png");
   addBorder(sceneObjects, {h4X + 4.0f, 0.5f, h4Z + 6.0f}, {0.4f, 0.6f, 4.5f},
-            {0, 15, 0});
+            {0, 15, 0}, "assets/textures/brick_texture.png");
 
   // hole 5
 
@@ -829,16 +826,16 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
 
   // 1. Single Straight Path
   addHolePathBare(sceneObjects, {h5X, 0.2f, h5Z}, {4.0f, 0.3f, 12.0f},
-                  {0, 0, 0});
+                  {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h5X, 0.35f, h5Z + 5.0f});
 
   // 2. Clean Straight Borders
   // Left border
   addBorder(sceneObjects, {h5X - 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
   // Right border
   addBorder(sceneObjects, {h5X + 2.2f, 0.5f, h5Z}, {0.4f, 0.6f, 12.0f},
-            {0, 0, 0});
+            {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // hole 6
   float h6X = 45.0f;
@@ -847,84 +844,84 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   // 1. Path (Wide base tapering to narrow)
   // Wide section
   addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z}, {6.0f, 0.3f, 5.0f},
-                  {0, 0, 0});
+                  {0, 0, 0}, "assets/textures/grass_texture.png");
   // Narrow section
   addHolePathBare(sceneObjects, {h6X, 0.2f, h6Z + 6.5f}, {2.0f, 0.3f, 8.0f},
-                  {0, 0, 0});
+                  {0, 0, 0}, "assets/textures/grass_texture.png");
 
   addHoleCup(sceneObjects, {h6X, 0.35f, h6Z + 10.0f});
 
   // 2. Borders (Angled to create the funnel effect)
   // Left side
   addBorder(sceneObjects, {h6X - 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // Wide wall
+            {0, 0, 0}, "assets/textures/brick_texture.png"); // Wide wall
   addBorder(sceneObjects, {h6X - 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f},
-            {0, 0, 0}); // Narrow wall
+            {0, 0, 0}, "assets/textures/brick_texture.png"); // Narrow wall
 
   // Right side
   addBorder(sceneObjects, {h6X + 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f},
-            {0, 0, 0}); // Wide wall
+            {0, 0, 0}, "assets/textures/brick_texture.png"); // Wide wall
   addBorder(sceneObjects, {h6X + 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f},
-            {0, 0, 0}); // Narrow wall
+            {0, 0, 0}, "assets/textures/brick_texture.png"); // Narrow wall
 
   //hole 7
   float h7X = 2.0f; float h7Z = 15.0f;
 
   // 1. Turf Segments
-  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}); // Base
-  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 4.5f}, {3.0f, 0.3f, 5.0f}, {10, 0, 0}); // Ramp
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0},"assets/textures/grass_texture.png"); // Base
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 4.5f}, {3.0f, 0.3f, 5.0f}, {10, 0, 0}, "assets/textures/grass_texture.png"); // Ramp
   
   // Pink-arrow section: Lowered to 0.5f and moved forward (h7Z + 8.5f) to weld to ramp
-  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 8.5f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 8.5f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   
   // Blue-dot section: Relocated cup here
   addHoleCup(sceneObjects, {h7X, 0.65f, h7Z + 8.5f});
 
   // 2. Borders (Adjusted for new geometry)
-  addBorder(sceneObjects, {h7X - 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0});
-  addBorder(sceneObjects, {h7X + 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0});
+  addBorder(sceneObjects, {h7X - 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h7X + 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0}, "assets/textures/brick_texture.png");
 
   //hole 8
   float h8X = 38.0f; float h8Z = 35.0f; // Shifted to clear space
 
   // 1. Path Segments
-  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}); // Entrance
-  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0}); // T-Junction
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}, "assets/textures/grass_texture.png"); // Entrance
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0}, "assets/textures/grass_texture.png"); // T-Junction
   
   // Welding patches (Bridge the gap between entrance and junction)
-  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
 
   // 2. Central Divider
-  addBorder(sceneObjects, {h8X, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h8X, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // 3. Cups (One on each side of the divider)
   addHoleCup(sceneObjects, {h8X - 2.5f, 0.35f, h8Z + 6.0f});
   addHoleCup(sceneObjects, {h8X + 2.5f, 0.35f, h8Z + 6.0f});
 
   // 4. Perimeter Walls (Flush-fitted)
-  addBorder(sceneObjects, {h8X - 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h8X + 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h8X - 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h8X + 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   //hole 9
   float h9X = 55.0f; float h9Z = 25.0f; // Shifted up to be fully on base
 
   // Turf
-  addHolePathBare(sceneObjects, {h9X,        0.2f, h9Z + 3.0f}, {3.0f, 0.3f, 6.0f}, {0,0,0}); // vertical
-  addHolePathBare(sceneObjects, {h9X + 2.5f, 0.2f, h9Z + 6.0f}, {5.0f, 0.3f, 3.0f}, {0,0,0}); // corner filler
-  addHolePathBare(sceneObjects, {h9X + 6.5f, 0.2f, h9Z + 6.0f}, {6.0f, 0.3f, 3.0f}, {0,0,0}); // horizontal
+  addHolePathBare(sceneObjects, {h9X,        0.2f, h9Z + 3.0f}, {3.0f, 0.3f, 6.0f}, {0,0,0}, "assets/textures/grass_texture.png"); // vertical
+  addHolePathBare(sceneObjects, {h9X + 2.5f, 0.2f, h9Z + 6.0f}, {5.0f, 0.3f, 3.0f}, {0,0,0}, "assets/textures/grass_texture.png"); // corner filler
+  addHolePathBare(sceneObjects, {h9X + 6.5f, 0.2f, h9Z + 6.0f}, {6.0f, 0.3f, 3.0f}, {0,0,0}, "assets/textures/grass_texture.png"); // horizontal
 
   // North cap
-  addBorder(sceneObjects, {h9X,         0.5f, h9Z - 0.2f},  {4.2f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h9X,         0.5f, h9Z - 0.2f},  {4.2f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
   // West wall
-  addBorder(sceneObjects, {h9X - 1.7f,  0.5f, h9Z + 4.5f}, {0.4f, 0.6f, 8.2f}, {0,0,0});
+  addBorder(sceneObjects, {h9X - 1.7f,  0.5f, h9Z + 4.5f}, {0.4f, 0.6f, 8.2f}, {0,0,0}, "assets/textures/brick_texture.png");
   // East wall of vertical (the one that was accidentally overwritten)
-  addBorder(sceneObjects, {h9X + 1.7f,  0.5f, h9Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+  addBorder(sceneObjects, {h9X + 1.7f,  0.5f, h9Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0}, "assets/textures/brick_texture.png");
   // North wall of horizontal
-  addBorder(sceneObjects, {h9X + 2.85f, 0.5f, h9Z + 4.3f}, {4.5f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h9X + 2.85f, 0.5f, h9Z + 4.3f}, {4.5f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
   // South wall
-  addBorder(sceneObjects, {h9X + 5.5f, 0.5f, h9Z + 7.3f}, {7.5f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h9X + 5.5f, 0.5f, h9Z + 7.3f}, {7.5f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
   // East cap
-  addBorder(sceneObjects, {h9X + 9.2f,  0.5f, h9Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+  addBorder(sceneObjects, {h9X + 9.2f,  0.5f, h9Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0,0,0}, "assets/textures/brick_texture.png");
 
   addHoleCup(sceneObjects, {h9X + 8.5f, 0.35f, h9Z + 6.0f});
 
@@ -933,120 +930,121 @@ if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::
   float h10X = 25.0f; float h10Z = 5.0f; // Placing this near the top edge
 
   // 1. Starting Platform
-  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   
   // 2. The Narrow Bridge (Only 1.0f wide)
-  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   
   // 3. Goal Platform
-  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0},"assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h10X, 0.35f, h10Z + 7.0f});
 
   // 4. Guard Rails (Prevents the ball from falling off the narrow bridge)
-  addBorder(sceneObjects, {h10X - 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h10X + 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h10X - 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h10X + 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
 
+
+  
   //hole 11
   float h11X = 50.0f; float h11Z = 35.0f;
 
   // 1. Entrance Platform
-  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z}, {3.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   
   // 2. The Gated Corridor
   // Using two small border pillars to create a 0.5f wide "gate"
-  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 4.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h11X - 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}); // Left gate
-  addBorder(sceneObjects, {h11X + 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}); // Right gate
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 4.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addBorder(sceneObjects, {h11X - 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}, "assets/textures/brick_texture.png"); // Left gate
+  addBorder(sceneObjects, {h11X + 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}, "assets/textures/brick_texture.png"); // Right gate
 
-  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 6.0f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 6.0f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
 
-  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 7.5f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 7.5f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   
   // 3. Goal Area
-  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 9.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 9.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h11X, 0.35f, h11Z + 9.0f});
 
   // 4. Perimeter Walls
-  addBorder(sceneObjects, {h11X - 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h11X + 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h11X - 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h11X + 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   //hole 12
   float h12X = 20.0f; float h12Z = 30.0f;
 
   // 1. Entrance (Welded to splits)
-  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z}, {3.0f, 0.3f, 3.5f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z}, {3.0f, 0.3f, 3.5f}, {0, 0, 0}, "assets/textures/grass_texture.png");
 
   // 2. The Split (Overlapping entrance)
-  addHolePathBare(sceneObjects, {h12X - 2.0f, 0.2f, h12Z + 2.5f}, {1.0f, 0.3f, 4.5f}, {0, 0, 0}); // Left
-  addHolePathBare(sceneObjects, {h12X + 2.0f, 0.2f, h12Z + 2.5f}, {2.0f, 0.3f, 4.5f}, {0, 0, 0}); // Right
+  addHolePathBare(sceneObjects, {h12X - 2.0f, 0.2f, h12Z + 2.5f}, {1.0f, 0.3f, 4.5f}, {0, 0, 0}, "assets/textures/grass_texture.png"); // Left
+  addHolePathBare(sceneObjects, {h12X + 2.0f, 0.2f, h12Z + 2.5f}, {2.0f, 0.3f, 4.5f}, {0, 0, 0}, "assets/textures/grass_texture.png"); // Right
 
   // 3. Goal Area (Rejoining - slightly overlapped)
-  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z + 6.5f}, {5.0f, 0.3f, 3.5f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z + 6.5f}, {5.0f, 0.3f, 3.5f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h12X, 0.35f, h12Z + 7.5f});
 
   // 4. Outer Perimeter (Extended to cover full length)
-  addBorder(sceneObjects, {h12X - 3.0f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Left border
-  addBorder(sceneObjects, {h12X + 3.2f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h12X - 3.0f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png"); // Left border
+  addBorder(sceneObjects, {h12X + 3.2f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
 
   // Copy of Hole 13 (Elevated Green)
   float h13X = 70.0f; float h13Z = 10.0f;
-  addHolePath(sceneObjects, {h13X, 0.2f, h13Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
+  addHolePath(sceneObjects, {h13X, 0.2f, h13Z}, {3.0f, 0.3f, 4.0f}, {0,0,0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h13X, 0.35f, h13Z});
   sceneObjects.push_back(ShapeFactory::createCube({h13X, 0.5f, h13Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
   sceneObjects.push_back(ShapeFactory::createCube({h13X, 0.8f, h13Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0,0,0}, turf));
-  addBorder(sceneObjects, {h13X - 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
-  addBorder(sceneObjects, {h13X + 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
-  addBorder(sceneObjects, {h13X, 1.1f, h13Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h13X - 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}, "assets/textures/brick_texture.png"); 
+  addBorder(sceneObjects, {h13X + 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}, "assets/textures/brick_texture.png"); 
+  addBorder(sceneObjects, {h13X, 1.1f, h13Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
 
   // Copy of Hole 14 (L-Turn)
   float h14X = 55.0f; float h14Z = 10.0f;
-  addHolePathBare(sceneObjects, {h14X, 0.2f, h14Z}, {3.0f, 0.3f, 6.0f}, {0,0,0});
-  addHolePathBare(sceneObjects, {h14X + 3.0f, 0.2f, h14Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0});
-  addBorder(sceneObjects, {h14X - 1.7f, 0.5f, h14Z}, {0.4f, 0.6f, 6.0f}, {0,0,0});
-  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z - 0.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
-  addBorder(sceneObjects, {h14X + 6.2f, 0.5f, h14Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
-  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
+  addHolePathBare(sceneObjects, {h14X, 0.2f, h14Z}, {3.0f, 0.3f, 6.0f}, {0,0,0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h14X + 3.0f, 0.2f, h14Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0}, "assets/textures/grass_texture.png");
+  addBorder(sceneObjects, {h14X - 1.7f, 0.5f, h14Z}, {0.4f, 0.6f, 6.0f}, {0,0,0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z - 0.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h14X + 6.2f, 0.5f, h14Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0}, "assets/textures/brick_texture.png");
   addHoleCup(sceneObjects, {h14X + 5.5f, 0.35f, h14Z + 1.5f});
 
   // Copy of Hole 15 (Straight Path)
   float h15X = 70.0f; float h15Z = 30.0f;
-  addHolePathBare(sceneObjects, {h15X, 0.2f, h15Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h15X, 0.2f, h15Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h15X, 0.35f, h15Z + 5.0f});
-  addBorder(sceneObjects, {h15X - 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h15X + 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h15X - 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h15X + 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // Copy of Hole 16 (Funnel)
   float h16X = 18.0f; float h16Z = 13.0f;
-  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
-  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h16X, 0.35f, h16Z + 10.0f});
-  addBorder(sceneObjects, {h16X - 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h16X - 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h16X + 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h16X + 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h16X - 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h16X - 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h16X + 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h16X + 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // Copy of Hole 17 (T-Junction)
   float h17X = 60.0f; float h17Z = 37.0f;
-  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
-  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0});
-  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h17X, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addBorder(sceneObjects, {h17X, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
   addHoleCup(sceneObjects, {h17X - 2.5f, 0.35f, h17Z + 6.0f});
   addHoleCup(sceneObjects, {h17X + 2.5f, 0.35f, h17Z + 6.0f});
-  addBorder(sceneObjects, {h17X - 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h17X + 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h17X - 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h17X + 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   // Copy of Hole 18 (Narrow Bridge)
   float h18X = 70.0f; float h18Z = 38.0f;
-  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
-  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});
-  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0}, "assets/textures/grass_texture.png");
   addHoleCup(sceneObjects, {h18X, 0.35f, h18Z + 7.0f});
-  addBorder(sceneObjects, {h18X - 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
-  addBorder(sceneObjects, {h18X + 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
-
+  addBorder(sceneObjects, {h18X - 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
+  addBorder(sceneObjects, {h18X + 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0}, "assets/textures/brick_texture.png");
 
   float rollOffset = 0;
   static bool nPressedLast = false;

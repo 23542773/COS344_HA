@@ -28,7 +28,6 @@ int fbWidth = 1280;
 int fbHeight = 720;
 Camera *camera;
 Terrain *terrain;
-Mesh *windmill;
 
 float lastX = 640.0f;
 float lastY = 360.0f;
@@ -52,6 +51,13 @@ LightManager g_lightManager;
 // Forward declarations
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+
+struct MeshInstance {
+    Mesh* mesh;
+    glm::vec3 pos;
+    glm::vec3 scale;
+    float rotY;
+};
 
 const char *getError() {
   const char *errorDescription;
@@ -174,6 +180,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
 }
+
 glm::vec3 turf(0.1f, 0.75f, 0.2f);
 glm::vec3 border(0.22f, 0.11f, 0.04f);
 glm::vec3 concrete(0.4f, 0.4f, 0.4f);
@@ -459,16 +466,51 @@ int main() {
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
 
-  std::vector<Vertex> vertices;
-  std::vector<unsigned int> indices;
-  if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
-    windmill = new Mesh(vertices, indices);
-  } else {
-    std::cout << "Failed to load windmill.obj" << std::endl;
-  }
 
   // Use Shader class instead of GLuint for lighting support
   Shader objectShader("object.vert", "object.frag");
+
+  //==================================Objects===================================
+   Mesh *bench = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Bench.obj", v, i))
+          bench = new Mesh(v, i, objectShader.getProgramID());
+  }
+  
+  Mesh *tree = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/PalmTree (1).obj", v, i))
+          tree = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *lamp = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/FirstLamppost.obj", v, i))
+          lamp = new Mesh(v, i, objectShader.getProgramID());
+  }
+
+  Mesh *boulders = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/boulders.obj", v, i))
+          boulders = new Mesh(v, i, objectShader.getProgramID());
+  }
+  Mesh *rocks = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Rocks.obj", v, i))
+          rocks = new Mesh(v, i, objectShader.getProgramID());
+  }
+  Mesh *flag = nullptr;
+  {
+      std::vector<Vertex> v; std::vector<unsigned int> i;
+      if (loadOBJ("assets/models/Flag.obj", v, i))
+          flag = new Mesh(v, i, objectShader.getProgramID());
+  }
+
   GLuint hudShader = LoadShaders("hud.vert", "hud.frag");
   droneShader = LoadShaders("drone_marker.vert", "drone_marker.frag");
   screenShader = LoadShaders("nightvision.vert", "nightvision.frag");
@@ -532,7 +574,13 @@ int main() {
   // Lower path
   addHolePath(sceneObjects, {h1X, 0.2f, h1Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
   addHoleCup(sceneObjects, {h1X, 0.35f, h1Z}); // <--- Cup now on small square
-  
+
+  std::vector<MeshInstance> meshInstances;
+  if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
+  if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f},  glm::vec3(1.0f), 0.0f});
+  if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f},  glm::vec3(1.0f), 0.0f});
+
+
   // Ramp
   sceneObjects.push_back(ShapeFactory::createCube({h1X, 0.5f, h1Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
   // Elevated Green
@@ -816,6 +864,18 @@ int main() {
     objectShader.setVec3("viewPos", camera->Position);
 
     terrain->draw(view, projection);
+
+    for (auto& inst : meshInstances) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, inst.pos);
+    model = glm::rotate(model, glm::radians(inst.rotY), glm::vec3(0,1,0));
+    model = glm::scale(model, inst.scale);
+    objectShader.use();
+    g_lightManager.bindAllLights(objectShader);
+    objectShader.setVec3("viewPos", camera->Position);
+    inst.mesh->draw(view, projection, model);
+}
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -873,15 +933,6 @@ int main() {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;
-    }
-
-    if (windmill != nullptr) {
-      glm::mat4 model = glm::mat4(1.0f);
-      // Bind lights for windmill
-      objectShader.use();
-      g_lightManager.bindAllLights(objectShader);
-      objectShader.setVec3("viewPos", camera->Position);
-      windmill->draw(view, projection, model);
     }
 
     glfwSwapBuffers(window);

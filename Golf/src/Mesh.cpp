@@ -2,8 +2,8 @@
 #include "shader.hpp" 
 #include <glm/gtc/type_ptr.hpp>
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
-    shaderProgram = LoadShaders("terrain.vert", "hole.frag"); // Use the new hole shader
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, GLuint shaderProgramID) {
+    shaderProgram = shaderProgramID;  // Use the passed-in shader, don't load a new one
     setupMesh(vertices, indices);
 }
 

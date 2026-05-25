@@ -8,13 +8,15 @@
 
 class Mesh {
 public:
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
+    unsigned int VAO;
+    unsigned int indexCount;
+
+    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, GLuint shaderID);
     ~Mesh();
     void draw(glm::mat4 view, glm::mat4 projection, glm::mat4 model);
 
 private:
-    unsigned int VAO, VBO, EBO;
-    unsigned int indexCount;
+    unsigned int VBO, EBO;
     GLuint shaderProgram;
     void setupMesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
 };

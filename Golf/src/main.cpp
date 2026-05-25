@@ -634,6 +634,187 @@ int main() {
   addBorder(sceneObjects, {h6X + 3.2f, 0.5f, h6Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Wide wall
   addBorder(sceneObjects, {h6X + 1.2f, 0.5f, h6Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0}); // Narrow wall
 
+  //hole 7
+  float h7X = 2.0f; float h7Z = 15.0f;
+
+  // 1. Turf Segments
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}); // Base
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 4.5f}, {3.0f, 0.3f, 5.0f}, {10, 0, 0}); // Ramp
+  
+  // Pink-arrow section: Lowered to 0.5f and moved forward (h7Z + 8.5f) to weld to ramp
+  addHolePathBare(sceneObjects, {h7X, 0.5f, h7Z + 8.5f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  
+  // Blue-dot section: Relocated cup here
+  addHoleCup(sceneObjects, {h7X, 0.65f, h7Z + 8.5f});
+
+  // 2. Borders (Adjusted for new geometry)
+  addBorder(sceneObjects, {h7X - 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0});
+  addBorder(sceneObjects, {h7X + 1.7f, 0.7f, h7Z + 4.5f}, {0.4f, 0.6f, 9.5f}, {10, 0, 0});
+
+  //hole 8
+  float h8X = 38.0f; float h8Z = 35.0f; // Shifted to clear space
+
+  // 1. Path Segments
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0}); // Entrance
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0}); // T-Junction
+  
+  // Welding patches (Bridge the gap between entrance and junction)
+  addHolePathBare(sceneObjects, {h8X, 0.2f, h8Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0});
+
+  // 2. Central Divider
+  addBorder(sceneObjects, {h8X, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0});
+
+  // 3. Cups (One on each side of the divider)
+  addHoleCup(sceneObjects, {h8X - 2.5f, 0.35f, h8Z + 6.0f});
+  addHoleCup(sceneObjects, {h8X + 2.5f, 0.35f, h8Z + 6.0f});
+
+  // 4. Perimeter Walls (Flush-fitted)
+  addBorder(sceneObjects, {h8X - 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h8X + 4.2f, 0.5f, h8Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+
+  //hole 9
+  float h9X = 55.0f; float h9Z = 25.0f; // Shifted up to be fully on base
+
+  // Turf
+  addHolePathBare(sceneObjects, {h9X,        0.2f, h9Z + 3.0f}, {3.0f, 0.3f, 6.0f}, {0,0,0}); // vertical
+  addHolePathBare(sceneObjects, {h9X + 2.5f, 0.2f, h9Z + 6.0f}, {5.0f, 0.3f, 3.0f}, {0,0,0}); // corner filler
+  addHolePathBare(sceneObjects, {h9X + 6.5f, 0.2f, h9Z + 6.0f}, {6.0f, 0.3f, 3.0f}, {0,0,0}); // horizontal
+
+  // North cap
+  addBorder(sceneObjects, {h9X,         0.5f, h9Z - 0.2f},  {4.2f, 0.6f, 0.4f}, {0,0,0});
+  // West wall
+  addBorder(sceneObjects, {h9X - 1.7f,  0.5f, h9Z + 4.5f}, {0.4f, 0.6f, 8.2f}, {0,0,0});
+  // East wall of vertical (the one that was accidentally overwritten)
+  addBorder(sceneObjects, {h9X + 1.7f,  0.5f, h9Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+  // North wall of horizontal
+  addBorder(sceneObjects, {h9X + 2.85f, 0.5f, h9Z + 4.3f}, {4.5f, 0.6f, 0.4f}, {0,0,0});
+  // South wall
+  addBorder(sceneObjects, {h9X + 5.5f, 0.5f, h9Z + 7.3f}, {7.5f, 0.6f, 0.4f}, {0,0,0});
+  // East cap
+  addBorder(sceneObjects, {h9X + 9.2f,  0.5f, h9Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+
+  addHoleCup(sceneObjects, {h9X + 8.5f, 0.35f, h9Z + 6.0f});
+
+
+  //hole 10
+  float h10X = 25.0f; float h10Z = 5.0f; // Placing this near the top edge
+
+  // 1. Starting Platform
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
+  
+  // 2. The Narrow Bridge (Only 1.0f wide)
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});
+  
+  // 3. Goal Platform
+  addHolePathBare(sceneObjects, {h10X, 0.2f, h10Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h10X, 0.35f, h10Z + 7.0f});
+
+  // 4. Guard Rails (Prevents the ball from falling off the narrow bridge)
+  addBorder(sceneObjects, {h10X - 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h10X + 0.5f, 0.5f, h10Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+
+
+  //hole 11
+  float h11X = 50.0f; float h11Z = 35.0f;
+
+  // 1. Entrance Platform
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  
+  // 2. The Gated Corridor
+  // Using two small border pillars to create a 0.5f wide "gate"
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 4.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h11X - 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}); // Left gate
+  addBorder(sceneObjects, {h11X + 0.75f, 0.5f, h11Z + 3.0f}, {0.5f, 0.6f, 0.5f}, {0, 0, 0}); // Right gate
+
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 6.0f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0});
+
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 7.5f}, {1.5f, 0.3f, 1.0f}, {0, 0, 0});
+  
+  // 3. Goal Area
+  addHolePathBare(sceneObjects, {h11X, 0.2f, h11Z + 9.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h11X, 0.35f, h11Z + 9.0f});
+
+  // 4. Perimeter Walls
+  addBorder(sceneObjects, {h11X - 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h11X + 1.7f, 0.5f, h11Z + 4.5f}, {0.4f, 0.6f, 10.0f}, {0, 0, 0});
+
+  //hole 12
+  float h12X = 20.0f; float h12Z = 30.0f;
+
+  // 1. Entrance (Welded to splits)
+  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z}, {3.0f, 0.3f, 3.5f}, {0, 0, 0});
+
+  // 2. The Split (Overlapping entrance)
+  addHolePathBare(sceneObjects, {h12X - 2.0f, 0.2f, h12Z + 2.5f}, {1.0f, 0.3f, 4.5f}, {0, 0, 0}); // Left
+  addHolePathBare(sceneObjects, {h12X + 2.0f, 0.2f, h12Z + 2.5f}, {2.0f, 0.3f, 4.5f}, {0, 0, 0}); // Right
+
+  // 3. Goal Area (Rejoining - slightly overlapped)
+  addHolePathBare(sceneObjects, {h12X, 0.2f, h12Z + 6.5f}, {5.0f, 0.3f, 3.5f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h12X, 0.35f, h12Z + 7.5f});
+
+  // 4. Outer Perimeter (Extended to cover full length)
+  addBorder(sceneObjects, {h12X - 3.0f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0}); // Left border
+  addBorder(sceneObjects, {h12X + 3.2f, 0.5f, h12Z + 2.5f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+
+
+  // Copy of Hole 13 (Elevated Green)
+  float h13X = 70.0f; float h13Z = 10.0f;
+  addHolePath(sceneObjects, {h13X, 0.2f, h13Z}, {3.0f, 0.3f, 4.0f}, {0,0,0});
+  addHoleCup(sceneObjects, {h13X, 0.35f, h13Z});
+  sceneObjects.push_back(ShapeFactory::createCube({h13X, 0.5f, h13Z + 4.0f}, {3.0f, 0.3f, 4.0f}, {15.0f, 0, 0}, turf));
+  sceneObjects.push_back(ShapeFactory::createCube({h13X, 0.8f, h13Z + 8.0f}, {6.0f, 0.3f, 6.0f}, {0,0,0}, turf));
+  addBorder(sceneObjects, {h13X - 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
+  addBorder(sceneObjects, {h13X + 3.2f, 1.1f, h13Z + 8.0f}, {0.4f, 0.6f, 6.0f}, {0,0,0}); 
+  addBorder(sceneObjects, {h13X, 1.1f, h13Z + 11.2f}, {6.8f, 0.6f, 0.4f}, {0,0,0});
+
+  // Copy of Hole 14 (L-Turn)
+  float h14X = 55.0f; float h14Z = 10.0f;
+  addHolePathBare(sceneObjects, {h14X, 0.2f, h14Z}, {3.0f, 0.3f, 6.0f}, {0,0,0});
+  addHolePathBare(sceneObjects, {h14X + 3.0f, 0.2f, h14Z + 1.5f}, {6.0f, 0.3f, 3.0f}, {0,0,0});
+  addBorder(sceneObjects, {h14X - 1.7f, 0.5f, h14Z}, {0.4f, 0.6f, 6.0f}, {0,0,0});
+  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z - 0.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
+  addBorder(sceneObjects, {h14X + 6.2f, 0.5f, h14Z + 1.5f}, {0.4f, 0.6f, 3.0f}, {0,0,0});
+  addBorder(sceneObjects, {h14X + 3.0f, 0.5f, h14Z + 3.2f}, {6.4f, 0.6f, 0.4f}, {0,0,0});
+  addHoleCup(sceneObjects, {h14X + 5.5f, 0.35f, h14Z + 1.5f});
+
+  // Copy of Hole 15 (Straight Path)
+  float h15X = 70.0f; float h15Z = 30.0f;
+  addHolePathBare(sceneObjects, {h15X, 0.2f, h15Z}, {4.0f, 0.3f, 12.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h15X, 0.35f, h15Z + 5.0f});
+  addBorder(sceneObjects, {h15X - 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h15X + 2.2f, 0.5f, h15Z}, {0.4f, 0.6f, 12.0f}, {0, 0, 0});
+
+  // Copy of Hole 16 (Funnel)
+  float h16X = 18.0f; float h16Z = 13.0f;
+  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z}, {6.0f, 0.3f, 5.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h16X, 0.2f, h16Z + 6.5f}, {2.0f, 0.3f, 8.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h16X, 0.35f, h16Z + 10.0f});
+  addBorder(sceneObjects, {h16X - 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h16X - 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h16X + 3.2f, 0.5f, h16Z}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h16X + 1.2f, 0.5f, h16Z + 6.5f}, {0.4f, 0.6f, 8.0f}, {0, 0, 0});
+
+  // Copy of Hole 17 (T-Junction)
+  float h17X = 60.0f; float h17Z = 37.0f;
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z}, {3.0f, 0.3f, 4.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 6.0f}, {8.0f, 0.3f, 5.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h17X, 0.2f, h17Z + 3.0f}, {3.0f, 0.3f, 2.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h17X, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 3.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h17X - 2.5f, 0.35f, h17Z + 6.0f});
+  addHoleCup(sceneObjects, {h17X + 2.5f, 0.35f, h17Z + 6.0f});
+  addBorder(sceneObjects, {h17X - 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h17X + 4.2f, 0.5f, h17Z + 6.0f}, {0.4f, 0.6f, 5.0f}, {0, 0, 0});
+
+  // Copy of Hole 18 (Narrow Bridge)
+  float h18X = 70.0f; float h18Z = 38.0f;
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z}, {2.0f, 0.3f, 2.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 3.0f}, {1.0f, 0.3f, 4.0f}, {0, 0, 0});
+  addHolePathBare(sceneObjects, {h18X, 0.2f, h18Z + 7.0f}, {3.0f, 0.3f, 3.0f}, {0, 0, 0});
+  addHoleCup(sceneObjects, {h18X, 0.35f, h18Z + 7.0f});
+  addBorder(sceneObjects, {h18X - 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+  addBorder(sceneObjects, {h18X + 0.5f, 0.5f, h18Z + 3.0f}, {0.1f, 0.6f, 4.0f}, {0, 0, 0});
+
+
   float rollOffset = 0;
   static bool nPressedLast = false;
   glm::vec3 lastCamPos;

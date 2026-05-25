@@ -623,7 +623,7 @@ int main() {
   {
     std::vector<Vertex> v;
     std::vector<unsigned int> i;
-    if (loadOBJ("assets/models/PalmTree (1).obj", v, i))
+    if (loadOBJ("assets/models/PalmTreeOne.obj", v, i))
       tree = new Mesh(v, i, objectShader.getProgramID());
   }
 

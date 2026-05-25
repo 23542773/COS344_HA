@@ -29,6 +29,7 @@ int fbWidth = 1280;
 int fbHeight = 720;
 Camera *camera;
 Terrain *terrain;
+Mesh *windmill;
 
 float lastX = 640.0f;
 float lastY = 360.0f;
@@ -246,7 +247,6 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   camera->processMouseScroll((float)yoffset);
 }
-
 glm::vec3 turf(0.1f, 0.75f, 0.2f);
 glm::vec3 border(0.22f, 0.11f, 0.04f);
 glm::vec3 concrete(0.4f, 0.4f, 0.4f);
@@ -599,6 +599,13 @@ int main() {
   skybox = new Skybox(dayFaces, nightFaces);
   terrain = new Terrain(79, 48);
 
+  std::vector<Vertex> vertices;
+  std::vector<unsigned int> indices;
+  // if (loadOBJ("assets/models/windmill.obj", vertices, indices)) {
+  //   windmill = new Mesh(vertices, indices);
+  // } else {
+  //   std::cout << "Failed to load windmill.obj" << std::endl;
+  // }
 
   // Use Shader class instead of GLuint for lighting support
   Shader objectShader("object.vert", "object.frag");
@@ -725,6 +732,14 @@ int main() {
             {0, 0, 0});
   addBorder(sceneObjects, {h1X, 1.1f, h1Z + 11.2f}, {6.8f, 0.6f, 0.4f},
             {0, 0, 0});
+  
+std::vector<MeshInstance> meshInstances;
+if (bench) meshInstances.push_back({bench, {h1X, 0.0f, h1Z + 13.0f}, glm::vec3(1.0f), 180.0f});
+if (tree)  meshInstances.push_back({tree,  {h1X + 5.0f, 0.0f, h1Z + 5.0f}, glm::vec3(1.0f), 0.0f});
+if (lamp)  meshInstances.push_back({lamp,  {h1X - 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+if (lamp)  meshInstances.push_back({lamp,  {h1X + 3.0f, 0.0f, h1Z - 3.0f}, glm::vec3(1.0f), 0.0f});
+
+            
 
   // Hole 2
   float h2X = 30.0f;
@@ -1209,6 +1224,15 @@ int main() {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       cout << "OpenGL Error: " << err << endl;
+    }
+
+    if (windmill != nullptr) {
+      glm::mat4 model = glm::mat4(1.0f);
+      // Bind lights for windmill
+      objectShader.use();
+      g_lightManager.bindAllLights(objectShader);
+      objectShader.setVec3("viewPos", camera->Position);
+      windmill->draw(view, projection, model);
     }
 
     glfwSwapBuffers(window);
